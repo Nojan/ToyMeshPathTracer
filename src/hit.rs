@@ -1,7 +1,7 @@
 use crate::vec3::Vec3;
 
 pub struct Hit {
-    pos: Vec3,
-    normal: Vec3,
-    t: f32,
+    pub pos: Vec3,
+    pub normal: Vec3,
+    pub t: f32,
 }
