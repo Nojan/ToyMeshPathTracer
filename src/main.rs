@@ -29,7 +29,20 @@ fn compute_scene_boundary(triangle_list: &Vec<Triangle>) -> (Vec3, Vec3) {
 }
 
 fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, triangle_list: &Vec<Triangle>) -> Option<Hit> {
-    None
+    let mut min_distance = max_t;
+    let mut best_hit: Option<Hit> = None;
+    for triangle in triangle_list.iter() {
+        let hit = triangle.intersect(&ray, min_t, max_t);
+        if hit.is_none() {
+            continue;
+        }
+        let hit = hit.unwrap();
+        if hit.t < min_distance {
+            min_distance = hit.t;
+            best_hit = Some(hit);
+        }
+    }
+    return best_hit;
 }
 
 fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> Vec3 {
@@ -109,8 +122,8 @@ fn main() {
         dist_to_focus,
     );
 
-    const WIDTH: usize = 200;
-    const HEIGHT: usize = 200;
+    const WIDTH: usize = 640;
+    const HEIGHT: usize = 360;
     let mut data = [0u8; 3 * WIDTH * HEIGHT];
     let mut data_iter = data.iter_mut();
 
