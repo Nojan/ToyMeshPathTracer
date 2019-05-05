@@ -7,13 +7,13 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    fn new(v0: Vec3, v1: Vec3, v2: Vec3) -> Triangle {
+    pub fn new(v0: Vec3, v1: Vec3, v2: Vec3) -> Triangle {
         Triangle {
             vertices: [v0, v1, v2],
         }
     }
 
-    fn intersect(&self, ray: &Ray, tmin: f32, tmax: f32) -> Option<Hit> {
+    pub fn intersect(&self, ray: &Ray, tmin: f32, tmax: f32) -> Option<Hit> {
         let edge0 = self.vertices[1] - self.vertices[0];
         let edge1 = self.vertices[2] - self.vertices[0];
         let normal = normalize(&cross(&edge0, &edge1));

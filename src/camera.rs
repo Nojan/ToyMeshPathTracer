@@ -12,7 +12,34 @@ pub struct Camera {
 }
 
 impl Camera {
-    fn get_ray(&self, s: f32, t: f32, state: &mut u32) -> Ray {
+    pub fn look_at(
+        look_from: &Vec3,
+        look_at: &Vec3,
+        up: &Vec3,
+        vfov: f32,
+        aspect: f32,
+        aperture: f32,
+        _focus_dist: f32,
+    ) -> Camera {
+        let lens_radius = aperture / 2.0;
+        let theta = vfov * core::f32::consts::PI / 180.0;
+        let half_height = (theta / 2.0).tan();
+        let half_width = aspect * half_height;
+        let w = normalize(&(*look_from - *look_at));
+        let u = normalize(&cross(&up, &w));
+        let v = cross(&w, &u);
+        Camera {
+            origin: *look_from,
+            lower_left_corner: *look_from - u * half_width - v * half_height - w,
+            horizontal: u * 2.0 * half_width,
+            vertical: v * 2.0 * half_height,
+            u: u,
+            v: v,
+            w: w,
+        }
+    }
+
+    pub fn get_ray(&self, s: f32, t: f32, state: &mut u32) -> Ray {
         let rd = Vec3 {
             data: [1.0, 1.0, 1.0],
         };
