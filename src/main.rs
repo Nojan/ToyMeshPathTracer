@@ -8,6 +8,7 @@ mod triangle;
 mod vec3;
 
 use camera::*;
+use hit::*;
 use ray::*;
 use triangle::*;
 use vec3::*;
@@ -27,11 +28,21 @@ fn compute_scene_boundary(triangle_list: &Vec<Triangle>) -> (Vec3, Vec3) {
     )
 }
 
+fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, triangle_list: &Vec<Triangle>) -> Option<Hit> {
+    None
+}
+
 fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> Vec3 {
     if 0 == depth {
         return Vec3::zero();
     }
-    Vec3::zero()
+    let hit = hit_scene(ray, 0.01, 100.0, triangle_list);
+    if hit.is_some() {
+        return Vec3::zero();
+    } else {
+        let t = 0.5 * (ray.dir.y() + 1.0);
+        return Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t * 0.5;
+    }
 }
 
 fn gamma_correction(color: Vec3) -> Vec3 {
@@ -78,13 +89,7 @@ fn main() {
         triangle_list.push(tr1);
     }
     let triangle_list = triangle_list;
-    for tr in triangle_list.iter() {
-        for vtx in tr.vertices.iter() {
-            println!("{:?}", vtx);
-        }
-    }
     let (scene_min, scene_max) = compute_scene_boundary(&triangle_list);
-    println!("{:?} {:?}", scene_min, scene_max);
 
     // place the camera
     let scene_size = scene_max - scene_min;
