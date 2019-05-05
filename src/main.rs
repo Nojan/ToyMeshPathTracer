@@ -8,6 +8,7 @@ mod triangle;
 mod vec3;
 
 use camera::*;
+use ray::*;
 use triangle::*;
 use vec3::*;
 
@@ -24,6 +25,13 @@ fn compute_scene_boundary(triangle_list: &Vec<Triangle>) -> (Vec3, Vec3) {
         (Vec3::max_value(), Vec3::min_value()),
         compute_triangle_boundary,
     )
+}
+
+fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> Vec3 {
+    if 0 == depth {
+        return Vec3::zero();
+    }
+    Vec3::zero()
 }
 
 fn gamma_correction(color: Vec3) -> Vec3 {
@@ -115,6 +123,7 @@ fn main() {
                     let u = (x as f32) * inv_width;
                     let v = (y as f32) * inv_height;
                     let ray = camera.get_ray(u, v, &mut rng_state);
+                    color = color + trace(&ray, 10, &mut rng_state, &triangle_list);
                 }
                 color = color * SPP as f32;
                 color = gamma_correction(color);
