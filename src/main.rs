@@ -45,13 +45,21 @@ fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, triangle_list: &Vec<Triangle>) -
     return best_hit;
 }
 
-fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> Vec3 {
+fn scatter(ray: &Ray, hit: &Hit, mut rng_state: &u32) -> Ray {
+    Ray {
+        origin: hit.pos,
+        dir: hit.normal,
+    }
+}
+
+fn trace(ray: &Ray, depth: usize, mut rng_state: &u32, triangle_list: &Vec<Triangle>) -> Vec3 {
     if 0 == depth {
         return Vec3::zero();
     }
     let hit = hit_scene(ray, 0.01, 100.0, triangle_list);
     if hit.is_some() {
-        return Vec3::zero();
+        let ray_scatter = scatter(&ray, &hit.unwrap(), &mut rng_state);
+        return trace(&ray_scatter, depth - 1, &mut rng_state, &triangle_list) * 0.9;
     } else {
         let t = 0.5 * (ray.dir.y() + 1.0);
         return Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t * 0.5;
@@ -139,7 +147,7 @@ fn main() {
                 const SPP: usize = 1;
                 for s in 0..SPP {
                     let u = (x as f32) * inv_width;
-                    let v = (y as f32) * inv_height;
+                    let v = 1.0 - (y as f32) * inv_height;
                     let ray = camera.get_ray(u, v, &mut rng_state);
                     color = color + trace(&ray, 10, &mut rng_state, &triangle_list);
                 }

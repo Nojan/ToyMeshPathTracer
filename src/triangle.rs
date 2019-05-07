@@ -79,20 +79,4 @@ mod tests {
         };
         assert!(triangle.intersect(&ray_not_intersect, 0.0, 1.0).is_none());
     }
-
-    #[test]
-    fn test_fail() {
-        let triangle = Triangle::new(
-            Vec3::new(-0.5, -0.5, 0.0),
-            Vec3::new(0.0, 0.5, 0.0),
-            Vec3::new(0.5, -0.5, 0.0),
-        );
-
-        let ray_not_intersect = Ray {
-            origin: Vec3::new(0.5, 0.5, -0.5),
-            dir: Vec3::new(0.0, 0.0, 1.0),
-        };
-        assert!(triangle.intersect(&ray_not_intersect, 0.0, 1.0).is_none());
-    }
-
 }

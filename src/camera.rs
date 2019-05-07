@@ -40,7 +40,7 @@ impl Camera {
     }
 
     pub fn get_ray(&self, s: f32, t: f32, state: &mut u32) -> Ray {
-        let rd = Vec3::fill(1.0); // no random yet
+        let rd = Vec3::fill(0.0); // no random yet
         let offset = self.u * rd.x() + self.v * rd.y();
         let ray_origin = self.origin + offset;
         let ray_normal =
