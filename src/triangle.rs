@@ -15,7 +15,7 @@ impl Triangle {
 
     pub fn intersect(&self, ray: &Ray, tmin: f32, tmax: f32) -> Option<Hit> {
         let edge0 = self.vertices[1] - self.vertices[0];
-        let edge1 = self.vertices[2] - self.vertices[0];
+        let edge1 = self.vertices[2] - self.vertices[1];
         let normal = normalize(&cross(&edge0, &edge1));
         let plane_offset = dot(&self.vertices[0], &normal);
 
@@ -72,5 +72,27 @@ mod tests {
         assert!(hit_result.is_some());
         let hit = hit_result.unwrap();
         assert!((0.5 - hit.t).abs() < 0.001);
+
+        let ray_not_intersect = Ray {
+            origin: Vec3::new(0.5, 0.5, -0.5),
+            dir: Vec3::new(0.0, 0.0, 1.0),
+        };
+        assert!(triangle.intersect(&ray_not_intersect, 0.0, 1.0).is_none());
     }
+
+    #[test]
+    fn test_fail() {
+        let triangle = Triangle::new(
+            Vec3::new(-0.5, -0.5, 0.0),
+            Vec3::new(0.0, 0.5, 0.0),
+            Vec3::new(0.5, -0.5, 0.0),
+        );
+
+        let ray_not_intersect = Ray {
+            origin: Vec3::new(0.5, 0.5, -0.5),
+            dir: Vec3::new(0.0, 0.0, 1.0),
+        };
+        assert!(triangle.intersect(&ray_not_intersect, 0.0, 1.0).is_none());
+    }
+
 }

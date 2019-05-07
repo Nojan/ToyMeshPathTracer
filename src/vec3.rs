@@ -197,6 +197,26 @@ mod tests {
     }
 
     #[test]
+    fn length() {
+        let v1 = Vec3::new(0.0, -2.0, 0.0);
+        assert_eq!(v1.length(), 2.0);
+    }
+
+    #[test]
+    fn normalize() {
+        let v1 = Vec3::new(0.0, -2.0, 0.0);
+        assert_eq!(super::normalize(&v1).length(), 1.0);
+    }
+
+    #[test]
+    fn cross() {
+        let v1 = Vec3::new(0.0, 1.0, 0.0);
+        let v2 = Vec3::new(0.0, 0.0, 1.0);
+        let v3 = Vec3::new(-1.0, 0.0, 0.0);
+        assert_eq!(v3, super::cross(&v2, &v1));
+    }
+
+    #[test]
     fn min_max() {
         let v1 = Vec3::new(0.0, 1.0, 2.0);
         let v2 = Vec3::new(-1.0, 10.0, 0.5);
