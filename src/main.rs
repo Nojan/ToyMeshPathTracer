@@ -45,7 +45,7 @@ fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, triangle_list: &Vec<Triangle>) -
     return best_hit;
 }
 
-const RAY_MIN: f32 = 0.001;
+const RAY_MIN: f32 = 0.01;
 const RAY_MAX: f32 = 100.0;
 const LIGHT_DIR: Vec3 = Vec3{ data: [-0.531, 0.76, 0.379] };
 
@@ -152,7 +152,7 @@ fn main() {
     {
         let inv_width = 1.0f32 / (WIDTH as f32);
         let inv_height = 1.0f32 / (HEIGHT as f32);
-        const SPP: usize = 1;
+        const SPP: usize = 4;
         const SPP_INV: f32 = 1.0 / (SPP as f32);
 
         for y in 0..HEIGHT {

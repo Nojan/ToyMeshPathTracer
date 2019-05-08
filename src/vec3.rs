@@ -27,10 +27,23 @@ impl Vec3 {
         Vec3 { data: [x, y, z] }
     }
 
+    pub fn rand_unit_2d(rng_state: &mut u32) -> Vec3 {
+        let mut result = Vec3::zero();
+        'length: loop {
+            for idx in 0..2 {
+                result.data[idx] = (random_float01(rng_state) - 0.5) * 2.0;
+            }
+            if result.length_sq() <= 1.0 {
+                break 'length;
+            }
+        }
+        return result;
+    }
+
     pub fn rand_unit(rng_state: &mut u32) -> Vec3 {
         let mut result = Vec3::zero();
         for idx in 0..3 {
-            result.data[idx] = (random_float01(rng_state) - 0.5) + 2.0;
+            result.data[idx] = (random_float01(rng_state) - 0.5) * 2.0;
         }
         return normalize(&result);
     }
