@@ -32,7 +32,7 @@ fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, triangle_list: &Vec<Triangle>) -
     let mut min_distance = max_t;
     let mut best_hit: Option<Hit> = None;
     for triangle in triangle_list.iter() {
-        let hit = triangle.intersect(&ray, min_t, max_t);
+        let hit = triangle.intersect(ray, min_t, max_t);
         if hit.is_none() {
             continue;
         }
@@ -45,21 +45,34 @@ fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, triangle_list: &Vec<Triangle>) -
     return best_hit;
 }
 
-fn scatter(ray: &Ray, hit: &Hit, mut rng_state: &u32) -> Ray {
-    Ray {
+const RAY_MIN: f32 = 0.001;
+const RAY_MAX: f32 = 100.0;
+const LIGHT_DIR: Vec3 = Vec3{ data: [-0.531, 0.76, 0.379] };
+
+fn scatter(ray: &Ray, hit: &Hit, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> (Ray, Vec3) {
+    let mut light_ray = Vec3::zero();
+    let target = hit.normal + Vec3::rand_unit(rng_state);
+    let scattered = Ray {
         origin: hit.pos,
-        dir: hit.normal,
+        dir: normalize(&target),
+    };
+
+    if hit_scene(&Ray { origin: hit.pos, dir: LIGHT_DIR }, RAY_MIN, RAY_MAX, triangle_list).is_none() {
+        let nl = hit.normal * dot(&hit.normal, &ray.dir).signum() * -1.0; 
+        light_ray = Vec3::fill(0.7) * 0.0f32.max(dot(&LIGHT_DIR, &nl));
     }
+    
+    return (scattered, light_ray);
 }
 
-fn trace(ray: &Ray, depth: usize, mut rng_state: &u32, triangle_list: &Vec<Triangle>) -> Vec3 {
+fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> Vec3 {
     if 0 == depth {
         return Vec3::zero();
     }
-    let hit = hit_scene(ray, 0.01, 100.0, triangle_list);
+    let hit = hit_scene(ray, RAY_MIN, RAY_MAX, triangle_list);
     if hit.is_some() {
-        let ray_scatter = scatter(&ray, &hit.unwrap(), &mut rng_state);
-        return trace(&ray_scatter, depth - 1, &mut rng_state, &triangle_list) * 0.9;
+        let (ray_scatter, light_ray) = scatter(ray, &hit.unwrap(), rng_state, triangle_list);
+        return light_ray + trace(&ray_scatter, depth - 1, rng_state, triangle_list) * 0.7;
     } else {
         let t = 0.5 * (ray.dir.y() + 1.0);
         return Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t * 0.5;
@@ -75,7 +88,7 @@ fn gamma_correction(color: Vec3) -> Vec3 {
 }
 
 fn main() {
-    let filename = "data/triangle.obj";
+    let filename = "data/suzanne.obj";
     println!("Loading {}", filename);
     let mut triangle_list = obj_loader::load_scene(filename).expect("!?");
     println!("Loaded {} triangles", triangle_list.len());

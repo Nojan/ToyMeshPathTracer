@@ -6,7 +6,7 @@ fn xor_shift_32(val: u32) -> u32 {
     return x;
 }
 
-fn random_float01(state: &mut u32) -> f32 {
+pub fn random_float01(state: &mut u32) -> f32 {
     *state = xor_shift_32(*state);
     ((*state & 0xFFFFFF) as f32) / 16777216.0f32
 }

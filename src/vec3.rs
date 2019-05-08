@@ -1,4 +1,5 @@
 use std::ops;
+use crate::random::*;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Vec3 {
@@ -24,6 +25,14 @@ impl Vec3 {
 
     pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
         Vec3 { data: [x, y, z] }
+    }
+
+    pub fn rand_unit(rng_state: &mut u32) -> Vec3 {
+        let mut result = Vec3::zero();
+        for idx in 0..3 {
+            result.data[idx] = (random_float01(rng_state) - 0.5) + 2.0;
+        }
+        return normalize(&result);
     }
 
     pub fn x(&self) -> f32 {
