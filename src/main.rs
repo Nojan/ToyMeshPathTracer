@@ -88,7 +88,7 @@ fn gamma_correction(color: Vec3) -> Vec3 {
 }
 
 fn main() {
-    let filename = "data/suzanne.obj";
+    let filename = "data/triangle.obj";
     println!("Loading {}", filename);
     let mut triangle_list = obj_loader::load_scene(filename).expect("!?");
     println!("Loaded {} triangles", triangle_list.len());
@@ -152,19 +152,20 @@ fn main() {
     {
         let inv_width = 1.0f32 / (WIDTH as f32);
         let inv_height = 1.0f32 / (HEIGHT as f32);
+        const SPP: usize = 1;
+        const SPP_INV: f32 = 1.0 / (SPP as f32);
 
         for y in 0..HEIGHT {
             let mut rng_state: u32 = (y as u32) * 9781 + 1;
             for x in 0..WIDTH {
                 let mut color = Vec3::zero();
-                const SPP: usize = 1;
                 for s in 0..SPP {
                     let u = (x as f32) * inv_width;
                     let v = 1.0 - (y as f32) * inv_height;
                     let ray = camera.get_ray(u, v, &mut rng_state);
                     color = color + trace(&ray, 10, &mut rng_state, &triangle_list);
                 }
-                color = color * SPP as f32;
+                color = color * SPP_INV;
                 color = gamma_correction(color);
 
                 // saturate
