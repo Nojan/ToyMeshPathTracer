@@ -8,7 +8,7 @@ pub struct Camera {
     vertical: Vec3,
     u: Vec3,
     v: Vec3,
-    w: Vec3,
+    lens_radius: f32,
 }
 
 impl Camera {
@@ -35,12 +35,12 @@ impl Camera {
             vertical: v * 2.0 * half_height,
             u: u,
             v: v,
-            w: w,
+            lens_radius: lens_radius,
         }
     }
 
     pub fn get_ray(&self, s: f32, t: f32, state: &mut u32) -> Ray {
-        let rd = Vec3::rand_unit_2d(state) * 0.015; 
+        let rd = Vec3::rand_unit_2d(state) * self.lens_radius; 
         let offset = self.u * rd.x() + self.v * rd.y();
         let ray_origin = self.origin + offset;
         let ray_normal =

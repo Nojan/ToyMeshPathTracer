@@ -159,7 +159,7 @@ fn main() {
             let mut rng_state: u32 = (y as u32) * 9781 + 1;
             for x in 0..WIDTH {
                 let mut color = Vec3::zero();
-                for s in 0..SPP {
+                for _s in 0..SPP {
                     let u = (x as f32) * inv_width;
                     let v = 1.0 - (y as f32) * inv_height;
                     let ray = camera.get_ray(u, v, &mut rng_state);
