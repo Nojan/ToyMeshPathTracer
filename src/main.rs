@@ -66,17 +66,19 @@ fn scatter(ray: &Ray, hit: &Hit, rng_state: &mut u32, triangle_list: &Vec<Triang
     return (scattered, light_ray);
 }
 
-fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> Vec3 {
+fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> (Vec3, usize) {
     if 0 == depth {
-        return Vec3::zero();
+        return (Vec3::zero(), 1);
     }
     let hit = hit_scene(ray, RAY_MIN, RAY_MAX, triangle_list);
     if hit.is_some() {
         let (ray_scatter, light_ray) = scatter(ray, &hit.unwrap(), rng_state, triangle_list);
-        return light_ray + trace(&ray_scatter, depth - 1, rng_state, triangle_list) * 0.7;
+        let (color, ray_count) = trace(&ray_scatter, depth - 1, rng_state, triangle_list);
+        return (light_ray + color * 0.7, ray_count + 2);
     } else {
         let t = 0.5 * (ray.dir.y() + 1.0);
-        return Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t * 0.5;
+        let color = Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t * 0.5;
+        return (color, 1);
     }
 }
 
@@ -150,6 +152,7 @@ fn main() {
     let mut data_iter = data.iter_mut();
 
     // trace image
+    let mut ray_total_count = 0usize;
     let trace_begin = Instant::now();
     {
         let inv_width = 1.0f32 / (WIDTH as f32);
@@ -165,7 +168,9 @@ fn main() {
                     let u = (x as f32) * inv_width;
                     let v = 1.0 - (y as f32) * inv_height;
                     let ray = camera.get_ray(u, v, &mut rng_state);
-                    color = color + trace(&ray, 10, &mut rng_state, &triangle_list);
+                    let (ray_color, ray_count) = trace(&ray, 10, &mut rng_state, &triangle_list);
+                    color = color + ray_color;
+                    ray_total_count += ray_count;
                 }
                 color = color * SPP_INV;
                 color = gamma_correction(color);
@@ -182,7 +187,9 @@ fn main() {
         }
     }
     let trace_end = Instant::now();
-    println!("{:?}", trace_end.duration_since(trace_begin));
+    let trace_duration = trace_end.duration_since(trace_begin);
+    let durations_sec = (trace_duration.as_secs() as f32) + (trace_duration.subsec_micros() as f32) / 1000.0;
+    println!("{} rays per second", (ray_total_count as f32) / durations_sec);
 
     ppm_writer::write("test.ppm", WIDTH, HEIGHT, &data);
 }
