@@ -67,7 +67,24 @@ impl Vec3 {
     pub fn length(&self) -> f32 {
         self.length_sq().sqrt()
     }
+    
+    pub fn hmax(&self) -> f32 {
+        let mut result = std::f32::NEG_INFINITY;
+        for idx in 0..3 {
+            result = result.max(self.data[idx]);
+        }
+        return result;
+    }
+
+    pub fn hmin(&self) -> f32 {
+        let mut result = std::f32::INFINITY;
+        for idx in 0..3 {
+            result = result.min(self.data[idx]);
+        }
+        return result;
+    }
 }
+
 
 pub fn min(a: &Vec3, b: &Vec3) -> Vec3 {
     let mut result = Vec3::zero();
@@ -249,5 +266,12 @@ mod tests {
             assert_eq!(v_max.data[idx], v1.data[idx].max(v2.data[idx]));
             assert_eq!(v_min.data[idx], v1.data[idx].min(v2.data[idx]));
         }
+    }
+
+    #[test]
+    fn h_min_max() {
+        let v = Vec3::new(-1.0, 10.0, 0.5);
+        assert_eq!(-1.0, v.hmin());
+        assert_eq!(10.0, v.hmax());
     }
 }

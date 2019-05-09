@@ -6,6 +6,7 @@ mod random;
 mod ray;
 mod triangle;
 mod vec3;
+mod aabb;
 
 use std::time::Instant;
 use camera::*;
