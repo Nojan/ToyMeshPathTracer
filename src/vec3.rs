@@ -1,5 +1,5 @@
-use std::ops;
 use crate::random::*;
+use std::ops;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Vec3 {
@@ -67,7 +67,7 @@ impl Vec3 {
     pub fn length(&self) -> f32 {
         self.length_sq().sqrt()
     }
-    
+
     pub fn hmax(&self) -> f32 {
         let mut result = std::f32::NEG_INFINITY;
         for idx in 0..3 {
@@ -84,7 +84,6 @@ impl Vec3 {
         return result;
     }
 }
-
 
 pub fn min(a: &Vec3, b: &Vec3) -> Vec3 {
     let mut result = Vec3::zero();

@@ -1,17 +1,17 @@
-use crate::ray::*;
 use crate::vec3::*;
+use crate::triangle::*;
+use crate::aabb::*;
 
-pub struct Aabb {
-    min: Vec3,
-    max: Vec3,
+pub struct BvhNode {
+    v: Aabb,
+    d1: usize,
+    d2: usize,
+    is_leaf: bool;
 }
 
 impl Aabb {
     pub fn empty() -> Aabb {
-        Aabb {
-            min: Vec3::max_value(),
-            max: Vec3::min_value(),
-        }
+        Aabb {min: Vec3::max_value(), max: Vec3::min_value()}
     }
 
     pub fn is_empty(&self) -> bool {
@@ -22,19 +22,13 @@ impl Aabb {
         }
         return false;
     }
-
+    
     pub fn contain(&self, point: &Vec3) -> bool {
-        if self.is_empty() {
-            return false;
-        }
+        if self.is_empty() { return false; }
         for idx in 0..3 {
             let p_idx = point.data[idx];
-            if p_idx < self.min.data[idx] {
-                return false;
-            }
-            if p_idx > self.max.data[idx] {
-                return false;
-            }
+            if p_idx < self.min.data[idx] { return false; }
+            if p_idx > self.max.data[idx] { return false; }
         }
         return true;
     }
@@ -51,15 +45,9 @@ impl Aabb {
 
     pub fn union_aabb(a: &Aabb, b: &Aabb) -> Aabb {
         if a.is_empty() {
-            Aabb {
-                min: b.min,
-                max: b.max,
-            }
+            Aabb { min: b.min, max: b.max }
         } else {
-            Aabb {
-                min: min(&a.min, &b.min),
-                max: max(&a.max, &b.max),
-            }
+            Aabb { min: min(&a.min, &b.min), max: max(&a.max, &b.max) }
         }
     }
 
@@ -69,7 +57,7 @@ impl Aabb {
 
         let tsmaller = min(&t0, &t1);
         let tbigger = max(&t0, &t1);
-
+        
         let tmin = tmin.max(tsmaller.hmax());
         let tmax = tmax.min(tbigger.hmin());
 
@@ -114,7 +102,7 @@ mod tests {
         assert!(aabb.contain(&v0));
         assert!(aabb.contain(&v1));
     }
-
+    
     #[test]
     fn ray() {
         let v0 = Vec3::fill(-1.0);
@@ -123,22 +111,13 @@ mod tests {
         aabb.extend(&v0);
         aabb.extend(&v1);
 
-        let ray_inside = Ray {
-            origin: Vec3::zero(),
-            dir: Vec3::new(0.0, 0.0, 1.0),
-        };
+        let ray_inside = Ray { origin: Vec3::zero(), dir: Vec3::new(0.0, 0.0, 1.0) };
         assert!(aabb.test_intersection(&ray_inside, 0.0, 100.0));
 
-        let ray = Ray {
-            origin: Vec3::new(0.0, 0.0, -5.0),
-            dir: Vec3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray { origin: Vec3::new(0.0, 0.0, -5.0), dir: Vec3::new(0.0, 0.0, 1.0) };
         assert!(aabb.test_intersection(&ray, 0.0, 100.0));
 
-        let ray = Ray {
-            origin: Vec3::new(0.0, 0.0, -5.0),
-            dir: Vec3::new(0.0, 1.0, 0.0),
-        };
+        let ray = Ray { origin: Vec3::new(0.0, 0.0, -5.0), dir: Vec3::new(0.0, 1.0, 0.0) };
         assert!(!aabb.test_intersection(&ray, 0.0, 100.0));
     }
 }

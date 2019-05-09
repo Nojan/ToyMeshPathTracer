@@ -40,7 +40,7 @@ impl Camera {
     }
 
     pub fn get_ray(&self, s: f32, t: f32, state: &mut u32) -> Ray {
-        let rd = Vec3::rand_unit_2d(state) * self.lens_radius; 
+        let rd = Vec3::rand_unit_2d(state) * self.lens_radius;
         let offset = self.u * rd.x() + self.v * rd.y();
         let ray_origin = self.origin + offset;
         let ray_normal =

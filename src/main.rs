@@ -1,3 +1,4 @@
+mod aabb;
 mod camera;
 mod hit;
 mod obj_loader;
@@ -6,12 +7,11 @@ mod random;
 mod ray;
 mod triangle;
 mod vec3;
-mod aabb;
 
-use std::time::Instant;
 use camera::*;
 use hit::*;
 use ray::*;
+use std::time::Instant;
 use triangle::*;
 use vec3::*;
 
@@ -49,9 +49,16 @@ fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, triangle_list: &Vec<Triangle>) -
 
 const RAY_MIN: f32 = 0.01;
 const RAY_MAX: f32 = 100.0;
-const LIGHT_DIR: Vec3 = Vec3{ data: [-0.531, 0.76, 0.379] };
+const LIGHT_DIR: Vec3 = Vec3 {
+    data: [-0.531, 0.76, 0.379],
+};
 
-fn scatter(ray: &Ray, hit: &Hit, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> (Ray, Vec3) {
+fn scatter(
+    ray: &Ray,
+    hit: &Hit,
+    rng_state: &mut u32,
+    triangle_list: &Vec<Triangle>,
+) -> (Ray, Vec3) {
     let mut light_ray = Vec3::zero();
     let target = hit.normal + Vec3::rand_unit(rng_state);
     let scattered = Ray {
@@ -59,15 +66,30 @@ fn scatter(ray: &Ray, hit: &Hit, rng_state: &mut u32, triangle_list: &Vec<Triang
         dir: normalize(&target),
     };
 
-    if hit_scene(&Ray { origin: hit.pos, dir: LIGHT_DIR }, RAY_MIN, RAY_MAX, triangle_list).is_none() {
-        let nl = hit.normal * dot(&hit.normal, &ray.dir).signum() * -1.0; 
+    if hit_scene(
+        &Ray {
+            origin: hit.pos,
+            dir: LIGHT_DIR,
+        },
+        RAY_MIN,
+        RAY_MAX,
+        triangle_list,
+    )
+    .is_none()
+    {
+        let nl = hit.normal * dot(&hit.normal, &ray.dir).signum() * -1.0;
         light_ray = Vec3::fill(0.7) * 0.0f32.max(dot(&LIGHT_DIR, &nl));
     }
-    
+
     return (scattered, light_ray);
 }
 
-fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, triangle_list: &Vec<Triangle>) -> (Vec3, usize) {
+fn trace(
+    ray: &Ray,
+    depth: usize,
+    rng_state: &mut u32,
+    triangle_list: &Vec<Triangle>,
+) -> (Vec3, usize) {
     if 0 == depth {
         return (Vec3::zero(), 1);
     }
@@ -189,8 +211,12 @@ fn main() {
     }
     let trace_end = Instant::now();
     let trace_duration = trace_end.duration_since(trace_begin);
-    let durations_sec = (trace_duration.as_secs() as f32) + (trace_duration.subsec_micros() as f32) / 1000.0;
-    println!("{} rays per second", (ray_total_count as f32) / durations_sec);
+    let durations_sec =
+        (trace_duration.as_secs() as f32) + (trace_duration.subsec_micros() as f32) / 1000.0;
+    println!(
+        "{} rays per second",
+        (ray_total_count as f32) / durations_sec
+    );
 
     ppm_writer::write("test.ppm", WIDTH, HEIGHT, &data);
 }
