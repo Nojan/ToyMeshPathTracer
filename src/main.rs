@@ -7,6 +7,7 @@ mod ray;
 mod triangle;
 mod vec3;
 
+use std::time::Instant;
 use camera::*;
 use hit::*;
 use ray::*;
@@ -149,6 +150,7 @@ fn main() {
     let mut data_iter = data.iter_mut();
 
     // trace image
+    let trace_begin = Instant::now();
     {
         let inv_width = 1.0f32 / (WIDTH as f32);
         let inv_height = 1.0f32 / (HEIGHT as f32);
@@ -179,6 +181,8 @@ fn main() {
             }
         }
     }
+    let trace_end = Instant::now();
+    println!("{:?}", trace_end.duration_since(trace_begin));
 
     ppm_writer::write("test.ppm", WIDTH, HEIGHT, &data);
 }
