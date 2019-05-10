@@ -1,9 +1,9 @@
+use crate::bvh::*;
 use crate::camera::*;
 use crate::hit::*;
 use crate::ray::*;
 use crate::triangle::*;
 use crate::vec3::*;
-use crate::bvh::*;
 
 pub struct Scene<'a> {
     pub triangle_list: Vec<Triangle>,
@@ -33,12 +33,7 @@ fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, scene: &Scene) -> Option<Hit> {
     return best_hit;
 }
 
-fn scatter(
-    ray: &Ray,
-    hit: &Hit,
-    rng_state: &mut u32,
-    scene: &Scene,
-) -> (Ray, Vec3) {
+fn scatter(ray: &Ray, hit: &Hit, rng_state: &mut u32, scene: &Scene) -> (Ray, Vec3) {
     let mut light_ray = Vec3::zero();
     let target = hit.normal + Vec3::rand_unit(rng_state);
     let scattered = Ray {
@@ -64,12 +59,7 @@ fn scatter(
     return (scattered, light_ray);
 }
 
-pub fn trace(
-    ray: &Ray,
-    depth: usize,
-    rng_state: &mut u32,
-    scene: &Scene,
-) -> (Vec3, usize) {
+pub fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, scene: &Scene) -> (Vec3, usize) {
     if 0 == depth {
         return (Vec3::zero(), 1);
     }
@@ -84,5 +74,3 @@ pub fn trace(
         return (color, 1);
     }
 }
-
-

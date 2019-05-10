@@ -41,9 +41,15 @@ impl Aabb {
 
     pub fn extend(&self, point: &Vec3) -> Aabb {
         if self.is_empty() {
-            Aabb{ min: *point, max: *point}
+            Aabb {
+                min: *point,
+                max: *point,
+            }
         } else {
-            Aabb{ min: min(&self.min, &point), max: max(&self.max, &point) }
+            Aabb {
+                min: min(&self.min, &point),
+                max: max(&self.max, &point),
+            }
         }
     }
 

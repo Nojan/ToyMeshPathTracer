@@ -1,14 +1,14 @@
 mod aabb;
+mod bvh;
 mod camera;
 mod hit;
 mod obj_loader;
 mod ppm_writer;
 mod random;
 mod ray;
+mod scene;
 mod triangle;
 mod vec3;
-mod bvh;
-mod scene;
 
 use camera::*;
 use hit::*;
@@ -75,7 +75,10 @@ fn main() {
         triangle_list.push(tr0);
         triangle_list.push(tr1);
     }
-    let scene = scene::Scene { triangle_list: triangle_list, bvh: None };
+    let scene = scene::Scene {
+        triangle_list: triangle_list,
+        bvh: None,
+    };
     let (scene_min, scene_max) = compute_scene_boundary(&scene.triangle_list);
 
     // place the camera
