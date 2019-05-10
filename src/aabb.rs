@@ -39,13 +39,11 @@ impl Aabb {
         return true;
     }
 
-    pub fn extend(&mut self, point: &Vec3) {
+    pub fn extend(&self, point: &Vec3) -> Aabb {
         if self.is_empty() {
-            self.min = *point;
-            self.max = *point;
+            Aabb{ min: *point, max: *point}
         } else {
-            self.min = min(&self.min, &point);
-            self.max = max(&self.max, &point);
+            Aabb{ min: min(&self.min, &point), max: max(&self.max, &point) }
         }
     }
 
@@ -89,11 +87,11 @@ mod tests {
     #[test]
     fn extend_point() {
         let v = Vec3::zero();
-        let mut aabb = Aabb::empty();
+        let aabb = Aabb::empty();
         assert!(!aabb.contain(&v));
-        aabb.extend(&v);
+        let aabb = aabb.extend(&v);
         assert!(aabb.contain(&v));
-        aabb.extend(&Vec3::fill(1.0));
+        let aabb = aabb.extend(&Vec3::fill(1.0));
         assert!(aabb.contain(&v));
     }
 
@@ -101,12 +99,12 @@ mod tests {
     fn union_aabb() {
         let v0 = Vec3::fill(-1.0);
         let v1 = Vec3::fill(1.0);
-        let mut aabb0 = Aabb::empty();
-        aabb0.extend(&v0);
+        let aabb0 = Aabb::empty();
+        let aabb0 = aabb0.extend(&v0);
         assert!(aabb0.contain(&v0));
         assert!(!aabb0.contain(&v1));
-        let mut aabb1 = Aabb::empty();
-        aabb1.extend(&v1);
+        let aabb1 = Aabb::empty();
+        let aabb1 = aabb1.extend(&v1);
         assert!(!aabb1.contain(&v0));
         assert!(aabb1.contain(&v1));
 
@@ -119,9 +117,9 @@ mod tests {
     fn ray() {
         let v0 = Vec3::fill(-1.0);
         let v1 = Vec3::fill(1.0);
-        let mut aabb = Aabb::empty();
-        aabb.extend(&v0);
-        aabb.extend(&v1);
+        let aabb = Aabb::empty();
+        let aabb = aabb.extend(&v0);
+        let aabb = aabb.extend(&v1);
 
         let ray_inside = Ray {
             origin: Vec3::zero(),

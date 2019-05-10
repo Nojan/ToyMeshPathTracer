@@ -1,4 +1,4 @@
-fn xor_shift_32(val: u32) -> u32 {
+pub fn xor_shift_32(val: u32) -> u32 {
     let mut x = val;
     x ^= x << 13;
     x ^= x >> 17;

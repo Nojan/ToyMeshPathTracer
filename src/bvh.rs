@@ -1,68 +1,108 @@
 use crate::vec3::*;
 use crate::triangle::*;
 use crate::aabb::*;
+use crate::random::*;
+use crate::ray::*;
+use crate::hit::*;
 
-pub struct BvhNode {
+use std::cmp;
+
+pub struct Bvh<'a> {
+    nodes: Vec<BvhNode>,
+    triangles: &'a [Triangle],
+}
+
+struct BvhNode {
     v: Aabb,
     d1: usize,
     d2: usize,
-    is_leaf: bool;
+    is_leaf: bool,
 }
 
-impl Aabb {
-    pub fn empty() -> Aabb {
-        Aabb {min: Vec3::max_value(), max: Vec3::min_value()}
-    }
+impl<'a> Bvh<'a> {
 
-    pub fn is_empty(&self) -> bool {
-        for idx in 0..3 {
-            if self.min.data[idx] > self.max.data[idx] {
-                return true;
-            }
-        }
-        return false;
+    fn order_triangle(a: &Triangle, b: &Triangle, idx: usize) -> cmp::Ordering {
+        let a_min = a.vertices.iter().fold(std::f32::INFINITY, |min, vertice| min.min(vertice.data[idx]));
+        let b_min = b.vertices.iter().fold(std::f32::INFINITY, |min, vertice| min.min(vertice.data[idx]));
+        a_min.partial_cmp(&b_min).unwrap()
     }
     
-    pub fn contain(&self, point: &Vec3) -> bool {
-        if self.is_empty() { return false; }
-        for idx in 0..3 {
-            let p_idx = point.data[idx];
-            if p_idx < self.min.data[idx] { return false; }
-            if p_idx > self.max.data[idx] { return false; }
-        }
-        return true;
+    fn triangle_aabb(triangle: &Triangle) -> Aabb {
+        triangle.vertices.iter().fold(Aabb::empty(), |aabb, v| aabb.extend(v))
     }
 
-    pub fn extend(&mut self, point: &Vec3) {
-        if self.is_empty() {
-            self.min = *point;
-            self.max = *point;
+    fn create_impl(tri_start: usize, tri_count: usize, triangle_list: &mut[Triangle], bvh: &mut Vec<BvhNode>, rng: &mut u32) -> usize {
+        if triangle_list.len() < 4 {
+        }
+        *rng = xor_shift_32(*rng);
+        let idx = (*rng % 3) as usize;
+
+        triangle_list.sort_unstable_by(|a, b| Bvh::order_triangle(a, b, idx));
+
+        let node_idx = bvh.len();
+        {
+            let dummy = BvhNode { v: Aabb::empty(), d1: usize::max_value(), d2: usize::max_value(), is_leaf: false };
+            bvh.push(dummy);
+        }
+        let mut node = BvhNode { v: Aabb::empty(), d1: usize::max_value(), d2: usize::max_value(), is_leaf: false };
+        if tri_count <= 4 {
+            node.d1 = tri_start;
+            node.d2 = tri_count;
+            node.is_leaf = true;
+            node.v = triangle_list.iter().fold(Aabb::empty(), |aabb, tr| Aabb::union_aabb(&aabb, &Bvh::triangle_aabb(tr)));
         } else {
-            self.min = min(&self.min, &point);
-            self.max = max(&self.max, &point);
+            let split_idx = triangle_list.len() / 2;
+            let (left, right) = triangle_list.split_at_mut(split_idx);
+            node.d1 = Bvh::create_impl(tri_start, split_idx, left, bvh, rng);
+            node.d2 = Bvh::create_impl(tri_start + split_idx, tri_count - split_idx, right, bvh, rng);
+            node.is_leaf = false;
+            node.v = Aabb::union_aabb(&bvh[node.d1].v, &bvh[node.d2].v);
         }
+
+        bvh[node_idx] = node;
+        return node_idx;
     }
 
-    pub fn union_aabb(a: &Aabb, b: &Aabb) -> Aabb {
-        if a.is_empty() {
-            Aabb { min: b.min, max: b.max }
+    pub fn create(triangle_list: &mut[Triangle]) -> Bvh {
+        let mut bvh: Vec<BvhNode>  = Vec::new();
+        let mut rng = 0xF215C12Eu32;
+        Bvh::create_impl(0, triangle_list.len(), triangle_list, &mut bvh, &mut rng);
+        return Bvh { nodes: bvh, triangles: triangle_list };
+    }
+
+    fn intersect_impl(&self, idx: usize, ray: &Ray, tmin: f32, tmax: &mut f32) -> Option<Hit> {
+        let node = &self.nodes[idx];
+        if !node.v.test_intersection(ray, tmin, *tmax) {
+            return None;
+        }
+
+        let mut hit = None;
+        if node.is_leaf {
+            for tri_idx in node.d1..(node.d1+node.d2) {
+                hit = self.triangles[tri_idx].intersect(ray, tmin, *tmax);
+                if hit.is_some() {
+                    *tmax = hit.as_ref().unwrap().t;
+                }
+            };
         } else {
-            Aabb { min: min(&a.min, &b.min), max: max(&a.max, &b.max) }
+            let left_hit = self.intersect_impl(node.d1, ray, tmin, tmax);
+            let right_hit = self.intersect_impl(node.d2, ray, tmin, tmax);
+            if right_hit.is_some() {
+                hit = right_hit;
+            } else {
+                hit = left_hit;
+            }
         }
+
+        return hit;
     }
 
-    pub fn test_intersection(&self, ray: &Ray, tmin: f32, tmax: f32) -> bool {
-        let t0 = (self.min - ray.origin) / ray.dir;
-        let t1 = (self.max - ray.origin) / ray.dir;
-
-        let tsmaller = min(&t0, &t1);
-        let tbigger = max(&t0, &t1);
-        
-        let tmin = tmin.max(tsmaller.hmax());
-        let tmax = tmax.min(tbigger.hmin());
-
-        return tmin <= tmax;
+    pub fn intersect(&self, ray: &Ray, tmin: f32, tmax: f32) -> Option<Hit> {
+        let mut local_tmax = tmax;
+        self.intersect_impl(0, ray, tmin, &mut local_tmax)
     }
+
+
 }
 
 #[cfg(test)]
@@ -71,53 +111,5 @@ mod tests {
 
     #[test]
     fn empty() {
-        assert!(Aabb::empty().is_empty());
-    }
-
-    #[test]
-    fn extend_point() {
-        let v = Vec3::zero();
-        let mut aabb = Aabb::empty();
-        assert!(!aabb.contain(&v));
-        aabb.extend(&v);
-        assert!(aabb.contain(&v));
-        aabb.extend(&Vec3::fill(1.0));
-        assert!(aabb.contain(&v));
-    }
-
-    #[test]
-    fn union_aabb() {
-        let v0 = Vec3::fill(-1.0);
-        let v1 = Vec3::fill(1.0);
-        let mut aabb0 = Aabb::empty();
-        aabb0.extend(&v0);
-        assert!(aabb0.contain(&v0));
-        assert!(!aabb0.contain(&v1));
-        let mut aabb1 = Aabb::empty();
-        aabb1.extend(&v1);
-        assert!(!aabb1.contain(&v0));
-        assert!(aabb1.contain(&v1));
-
-        let aabb = Aabb::union_aabb(&aabb0, &aabb1);
-        assert!(aabb.contain(&v0));
-        assert!(aabb.contain(&v1));
-    }
-    
-    #[test]
-    fn ray() {
-        let v0 = Vec3::fill(-1.0);
-        let v1 = Vec3::fill(1.0);
-        let mut aabb = Aabb::empty();
-        aabb.extend(&v0);
-        aabb.extend(&v1);
-
-        let ray_inside = Ray { origin: Vec3::zero(), dir: Vec3::new(0.0, 0.0, 1.0) };
-        assert!(aabb.test_intersection(&ray_inside, 0.0, 100.0));
-
-        let ray = Ray { origin: Vec3::new(0.0, 0.0, -5.0), dir: Vec3::new(0.0, 0.0, 1.0) };
-        assert!(aabb.test_intersection(&ray, 0.0, 100.0));
-
-        let ray = Ray { origin: Vec3::new(0.0, 0.0, -5.0), dir: Vec3::new(0.0, 1.0, 0.0) };
-        assert!(!aabb.test_intersection(&ray, 0.0, 100.0));
     }
 }
