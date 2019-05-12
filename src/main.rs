@@ -86,7 +86,11 @@ fn main() {
     // place the camera
     let scene_size = scene_max - scene_min;
     let scene_center = (scene_min + scene_max) * 0.5;
-    let look_from = scene_center + scene_size * Vec3::new(0.3, 0.6, 1.2);
+    let look_from = if filename.contains("sponza.obj") {
+        Vec3::new(-5.6, 4.08, -1.22)
+    } else {
+        scene_center + scene_size * Vec3::new(0.3, 0.6, 1.2)
+    };
     let look_at = scene_center + scene_size * Vec3::new(0.0, -0.1, 0.0);
     let dist_to_focus = (look_from - look_at).length();
     let aperture = 0.03;
