@@ -41,14 +41,14 @@ fn gamma_correction(color: Vec3) -> Vec3 {
 }
 
 fn main() {
-    let filename = "data/triangle.obj";
+    let filename = "data/suzanne.obj";
     println!("Loading {}", filename);
-    let mut triangle_list = obj_loader::load_scene(filename).expect("!?");
-    println!("Loaded {} triangles", triangle_list.len());
+    let mut triangles = obj_loader::load_scene(filename).expect("!?");
+    println!("Loaded {} triangles", triangles.len());
     {
         // add two triangles that are right "under the scene" and covering a larger area than the scene
         // itself, to serve as a "floor"
-        let (scene_min, scene_max) = compute_scene_boundary(&triangle_list);
+        let (scene_min, scene_max) = compute_scene_boundary(&triangles);
         let floor_size = (scene_max - scene_min) * 0.7;
         let v0 = Vec3::new(
             scene_min.x() - floor_size.x(),
@@ -72,14 +72,16 @@ fn main() {
         );
         let tr0 = Triangle::new(v0, v1, v2);
         let tr1 = Triangle::new(v1, v3, v2);
-        triangle_list.push(tr0);
-        triangle_list.push(tr1);
+        triangles.push(tr0);
+        triangles.push(tr1);
     }
-    let scene = scene::Scene {
-        triangle_list: triangle_list,
+    let mut scene = scene::Scene {
+        triangle_list: triangles,
         bvh: None,
     };
     let (scene_min, scene_max) = compute_scene_boundary(&scene.triangle_list);
+    //scene.bvh = Some(bvh::Bvh::create(&mut scene.triangle_list[..]));
+    let scene = scene;
 
     // place the camera
     let scene_size = scene_max - scene_min;
@@ -142,7 +144,8 @@ fn main() {
     let trace_end = Instant::now();
     let trace_duration = trace_end.duration_since(trace_begin);
     let durations_sec =
-        (trace_duration.as_secs() as f32) + (trace_duration.subsec_micros() as f32) / 1000.0;
+        (trace_duration.as_secs() as f32) + (trace_duration.subsec_millis() as f32) / 1000.0;
+    println!("{} rays in {} s", ray_total_count, durations_sec);
     println!(
         "{} rays per second",
         (ray_total_count as f32) / durations_sec

@@ -7,9 +7,8 @@ use crate::vec3::*;
 
 use std::cmp;
 
-pub struct Bvh<'a> {
+pub struct Bvh {
     nodes: Vec<BvhNode>,
-    triangles: &'a [Triangle],
 }
 
 struct BvhNode {
@@ -19,7 +18,7 @@ struct BvhNode {
     is_leaf: bool,
 }
 
-impl<'a> Bvh<'a> {
+impl Bvh {
     fn order_triangle(a: &Triangle, b: &Triangle, idx: usize) -> cmp::Ordering {
         let a_min = a.vertices.iter().fold(std::f32::INFINITY, |min, vertice| {
             min.min(vertice.data[idx])
@@ -96,13 +95,17 @@ impl<'a> Bvh<'a> {
         let mut bvh: Vec<BvhNode> = Vec::new();
         let mut rng = 0xF215C12Eu32;
         Bvh::create_impl(0, triangle_list.len(), triangle_list, &mut bvh, &mut rng);
-        return Bvh {
-            nodes: bvh,
-            triangles: triangle_list,
-        };
+        return Bvh { nodes: bvh };
     }
 
-    fn intersect_impl(&self, idx: usize, ray: &Ray, tmin: f32, tmax: &mut f32) -> Option<Hit> {
+    fn intersect_impl(
+        &self,
+        idx: usize,
+        ray: &Ray,
+        tmin: f32,
+        tmax: &mut f32,
+        triangles: &[Triangle],
+    ) -> Option<Hit> {
         let node = &self.nodes[idx];
         if !node.v.test_intersection(ray, tmin, *tmax) {
             return None;
@@ -111,14 +114,16 @@ impl<'a> Bvh<'a> {
         let mut hit = None;
         if node.is_leaf {
             for tri_idx in node.d1..(node.d1 + node.d2) {
-                hit = self.triangles[tri_idx].intersect(ray, tmin, *tmax);
-                if hit.is_some() {
-                    *tmax = hit.as_ref().unwrap().t;
+                let tri_hit = triangles[tri_idx].intersect(ray, tmin, *tmax);
+                if tri_hit.is_some() {
+                    let tri_hit = tri_hit.unwrap();
+                    *tmax = tri_hit.t;
+                    hit = Some(tri_hit);
                 }
             }
         } else {
-            let left_hit = self.intersect_impl(node.d1, ray, tmin, tmax);
-            let right_hit = self.intersect_impl(node.d2, ray, tmin, tmax);
+            let left_hit = self.intersect_impl(node.d1, ray, tmin, tmax, triangles);
+            let right_hit = self.intersect_impl(node.d2, ray, tmin, tmax, triangles);
             if right_hit.is_some() {
                 hit = right_hit;
             } else {
@@ -129,9 +134,15 @@ impl<'a> Bvh<'a> {
         return hit;
     }
 
-    pub fn intersect(&self, ray: &Ray, tmin: f32, tmax: f32) -> Option<Hit> {
+    pub fn intersect(
+        &self,
+        ray: &Ray,
+        tmin: f32,
+        tmax: f32,
+        triangles: &[Triangle],
+    ) -> Option<Hit> {
         let mut local_tmax = tmax;
-        self.intersect_impl(0, ray, tmin, &mut local_tmax)
+        self.intersect_impl(0, ray, tmin, &mut local_tmax, triangles)
     }
 }
 

@@ -5,9 +5,9 @@ use crate::ray::*;
 use crate::triangle::*;
 use crate::vec3::*;
 
-pub struct Scene<'a> {
+pub struct Scene {
     pub triangle_list: Vec<Triangle>,
-    pub bvh: Option<Bvh<'a>>,
+    pub bvh: Option<Bvh>,
 }
 
 const RAY_MIN: f32 = 0.01;
@@ -17,6 +17,13 @@ const LIGHT_DIR: Vec3 = Vec3 {
 };
 
 fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, scene: &Scene) -> Option<Hit> {
+    if scene.bvh.is_some() {
+        return scene
+            .bvh
+            .as_ref()
+            .unwrap()
+            .intersect(ray, min_t, max_t, &scene.triangle_list[..]);
+    }
     let mut min_distance = max_t;
     let mut best_hit: Option<Hit> = None;
     for triangle in scene.triangle_list.iter() {
