@@ -79,9 +79,9 @@ fn main() {
         triangle_list: triangles,
         bvh: None,
     };
-    let (scene_min, scene_max) = compute_scene_boundary(&scene.triangle_list);
-    //scene.bvh = Some(bvh::Bvh::create(&mut scene.triangle_list[..]));
+    scene.bvh = Some(bvh::Bvh::create(&mut scene.triangle_list[..]));
     let scene = scene;
+    let (scene_min, scene_max) = compute_scene_boundary(&scene.triangle_list);
 
     // place the camera
     let scene_size = scene_max - scene_min;
@@ -147,8 +147,8 @@ fn main() {
         (trace_duration.as_secs() as f32) + (trace_duration.subsec_millis() as f32) / 1000.0;
     println!("{} rays in {} s", ray_total_count, durations_sec);
     println!(
-        "{} rays per second",
-        (ray_total_count as f32) / durations_sec
+        "{} K rays per second",
+        (ray_total_count as f32) / durations_sec / 1000.0
     );
 
     ppm_writer::write("test.ppm", WIDTH, HEIGHT, &data);
