@@ -6,6 +6,7 @@ pub fn load_scene(filename: &str) -> std::io::Result<Vec<Triangle>> {
     let mut vertices: Vec<f32> = Vec::new();
     let mut indexes: Vec<usize> = Vec::new();
     {
+        let mut idx_buffer: Vec<usize> = Vec::new();
         let contents = std::fs::read_to_string(filename)?;
         for line in contents.lines() {
             if line.starts_with("v ") {
@@ -20,6 +21,7 @@ pub fn load_scene(filename: &str) -> std::io::Result<Vec<Triangle>> {
                     vertices.push(val);
                 }
             } else if line.starts_with("f ") {
+                idx_buffer.clear();
                 let error = Error::new(ErrorKind::Other, "bad face form");
                 let mut word_iter = line.split_whitespace();
                 assert_eq!(Some("f"), word_iter.next());
@@ -28,7 +30,21 @@ pub fn load_scene(filename: &str) -> std::io::Result<Vec<Triangle>> {
                         Some(index_str) => index_str.parse::<usize>().unwrap(),
                         _ => return Err(error),
                     };
-                    indexes.push(index - 1usize);
+                    idx_buffer.push(index - 1usize);
+                }
+                if idx_buffer.len() == 3 {
+                    for idx in idx_buffer.iter() {
+                        indexes.push(*idx);
+                    }
+                } else if idx_buffer.len() == 4 {
+                    indexes.push(idx_buffer[0]);
+                    indexes.push(idx_buffer[1]);
+                    indexes.push(idx_buffer[2]);
+                    indexes.push(idx_buffer[0]);
+                    indexes.push(idx_buffer[2]);
+                    indexes.push(idx_buffer[3]);
+                } else {
+                    return Err(error);
                 }
             }
         }
