@@ -22,6 +22,15 @@ impl Aabb {
         }
         return false;
     }
+    
+    pub fn size(&self) -> Vec3 {
+        self.max - self.min
+    }
+
+    pub fn surface_area(&self) -> f32 {
+        let size = self.size();
+        2.0 * (size.x() * size.y() + size.x() * size.z() + size.y() * size.z() )
+    }
 
     pub fn contain(&self, point: &Vec3) -> bool {
         if self.is_empty() {
@@ -88,6 +97,14 @@ mod tests {
     #[test]
     fn empty() {
         assert!(Aabb::empty().is_empty());
+    }
+
+    #[test]
+    fn size() {
+        let v0 = Vec3::fill(-1.0);
+        let v1 = Vec3::fill(1.0);
+        let aabb = Aabb::empty().extend(&v0).extend(&v1);
+        assert_eq!(Vec3::fill(2.0), aabb.size());
     }
 
     #[test]
