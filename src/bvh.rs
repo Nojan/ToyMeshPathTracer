@@ -43,7 +43,6 @@ impl Bvh {
         bvh: &mut Vec<BvhNode>,
         rng: &mut u32,
     ) -> usize {
-        if triangle_list.len() < 4 {}
         *rng = xor_shift_32(*rng);
         let idx = (*rng % 3) as usize;
 
@@ -73,7 +72,20 @@ impl Bvh {
                 Aabb::union_aabb(&aabb, &Bvh::triangle_aabb(tr))
             });
         } else {
-            let split_idx = triangle_list.len() / 2;
+            //let split_idx = triangle_list.len() / 2;
+            let split_idx = 
+            {
+                let mut split_cost = Vec::with_capacity(triangle_list.len());
+                for idx in 0..triangle_list.len() {
+                    let left_aabb = triangle_list.iter().take(idx).fold(Aabb::empty(), |aabb, tr| {Aabb::union_aabb(&aabb, &Bvh::triangle_aabb(tr))});
+                    let right_aabb = triangle_list.iter().skip(idx).fold(Aabb::empty(), |aabb, tr| {Aabb::union_aabb(&aabb, &Bvh::triangle_aabb(tr))});
+                    let total_aabb = Aabb::union_aabb(&left_aabb, &right_aabb);
+                    let cost : f32 = 0.125f32 + (idx as f32 * left_aabb.surface_area() + (triangle_list.len() - idx) as f32 * right_aabb.surface_area()) / total_aabb.surface_area();
+                    split_cost.push(cost);
+                }
+                let split_min_cost = split_cost.iter().fold(std::f32::INFINITY, |min_val, &val| min_val.min(val)); 
+                split_cost.iter().position(|&val| val == split_min_cost).unwrap()
+            };
             let (left, right) = triangle_list.split_at_mut(split_idx);
             node.d1 = Bvh::create_impl(tri_start, split_idx, left, bvh, rng);
             node.d2 = Bvh::create_impl(
