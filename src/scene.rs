@@ -1,5 +1,4 @@
 use crate::bvh::*;
-use crate::camera::*;
 use crate::hit::*;
 use crate::ray::*;
 use crate::triangle::*;

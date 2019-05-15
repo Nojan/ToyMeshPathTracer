@@ -11,8 +11,6 @@ mod triangle;
 mod vec3;
 
 use camera::*;
-use hit::*;
-use ray::*;
 use std::time::Instant;
 use triangle::*;
 use vec3::*;

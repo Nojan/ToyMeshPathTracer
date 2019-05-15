@@ -3,7 +3,6 @@ use crate::hit::*;
 use crate::random::*;
 use crate::ray::*;
 use crate::triangle::*;
-use crate::vec3::*;
 
 use std::cmp;
 
