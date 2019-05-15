@@ -13,7 +13,7 @@ pub struct Scene {
 const RAY_MIN: f32 = 0.01;
 const RAY_MAX: f32 = 100.0;
 const LIGHT_DIR: Vec3 = Vec3 {
-    data: [-0.531, 0.76, 0.379],
+    data: [-0.5301519, 0.758786, 0.378395],
 };
 
 fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, scene: &Scene) -> Option<Hit> {
@@ -43,23 +43,10 @@ fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, scene: &Scene) -> Option<Hit> {
 fn scatter(ray: &Ray, hit: &Hit, rng_state: &mut u32, scene: &Scene) -> (Ray, Vec3) {
     let mut light_ray = Vec3::zero();
     let target = hit.normal + Vec3::rand_unit(rng_state);
-    let scattered = Ray {
-        origin: hit.pos,
-        dir: normalize(&target),
-    };
+    let scattered = Ray::new(&hit.pos, &normalize(&target));
 
-    if hit_scene(
-        &Ray {
-            origin: hit.pos,
-            dir: LIGHT_DIR,
-        },
-        RAY_MIN,
-        RAY_MAX,
-        scene,
-    )
-    .is_none()
-    {
-        let nl = hit.normal * dot(&hit.normal, &ray.dir).signum() * -1.0;
+    if hit_scene(&Ray::new(&hit.pos, &LIGHT_DIR), RAY_MIN, RAY_MAX, scene).is_none() {
+        let nl = hit.normal * dot(&hit.normal, &ray.dir()).signum() * -1.0;
         light_ray = Vec3::fill(0.7) * 0.0f32.max(dot(&LIGHT_DIR, &nl));
     }
 
@@ -76,7 +63,7 @@ pub fn trace(ray: &Ray, depth: usize, rng_state: &mut u32, scene: &Scene) -> (Ve
         let (color, ray_count) = trace(&ray_scatter, depth - 1, rng_state, scene);
         return (light_ray + color * 0.7, ray_count + 2);
     } else {
-        let t = 0.5 * (ray.dir.y() + 1.0);
+        let t = 0.5 * (ray.dir().y() + 1.0);
         let color = Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t * 0.5;
         return (color, 1);
     }

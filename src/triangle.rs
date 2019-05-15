@@ -59,24 +59,15 @@ mod tests {
             Vec3::new(0.0, 0.5, 0.0),
             Vec3::new(0.5, -0.5, 0.0),
         );
-        let ray_not_intersect = Ray {
-            origin: Vec3::new(0.0, 0.0, -0.5),
-            dir: Vec3::new(0.0, 0.0, -1.0),
-        };
+        let ray_not_intersect = Ray::new(&Vec3::new(0.0, 0.0, -0.5), &Vec3::new(0.0, 0.0, -1.0));
         assert!(triangle.intersect(&ray_not_intersect, 0.0, 1.0).is_none());
-        let ray_intersect = Ray {
-            origin: ray_not_intersect.origin,
-            dir: Vec3::new(0.0, 0.0, 1.0),
-        };
+        let ray_intersect = Ray::new(&ray_not_intersect.origin(), &Vec3::new(0.0, 0.0, 1.0));
         let hit_result = triangle.intersect(&ray_intersect, 0.0, 1.0);
         assert!(hit_result.is_some());
         let hit = hit_result.unwrap();
         assert!((0.5 - hit.t).abs() < 0.001);
 
-        let ray_not_intersect = Ray {
-            origin: Vec3::new(0.5, 0.5, -0.5),
-            dir: Vec3::new(0.0, 0.0, 1.0),
-        };
+        let ray_not_intersect = Ray::new(&Vec3::new(0.5, 0.5, -0.5), &Vec3::new(0.0, 0.0, 1.0));
         assert!(triangle.intersect(&ray_not_intersect, 0.0, 1.0).is_none());
     }
 }

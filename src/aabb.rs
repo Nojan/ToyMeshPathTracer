@@ -22,14 +22,14 @@ impl Aabb {
         }
         return false;
     }
-    
+
     pub fn size(&self) -> Vec3 {
         self.max - self.min
     }
 
     pub fn surface_area(&self) -> f32 {
         let size = self.size();
-        2.0 * (size.x() * size.y() + size.x() * size.z() + size.y() * size.z() )
+        2.0 * (size.x() * size.y() + size.x() * size.z() + size.y() * size.z())
     }
 
     pub fn contain(&self, point: &Vec3) -> bool {
@@ -77,8 +77,8 @@ impl Aabb {
     }
 
     pub fn test_intersection(&self, ray: &Ray, tmin: f32, tmax: f32) -> bool {
-        let t0 = (self.min - ray.origin) / ray.dir;
-        let t1 = (self.max - ray.origin) / ray.dir;
+        let t0 = (self.min - ray.origin()) * ray.dir_inv();
+        let t1 = (self.max - ray.origin()) * ray.dir_inv();
 
         let tsmaller = min(&t0, &t1);
         let tbigger = max(&t0, &t1);
@@ -144,22 +144,13 @@ mod tests {
         let aabb = aabb.extend(&v0);
         let aabb = aabb.extend(&v1);
 
-        let ray_inside = Ray {
-            origin: Vec3::zero(),
-            dir: Vec3::new(0.0, 0.0, 1.0),
-        };
+        let ray_inside = Ray::new(&Vec3::zero(), &Vec3::new(0.0, 0.0, 1.0));
         assert!(aabb.test_intersection(&ray_inside, 0.0, 100.0));
 
-        let ray = Ray {
-            origin: Vec3::new(0.0, 0.0, -5.0),
-            dir: Vec3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(&Vec3::new(0.0, 0.0, -5.0), &Vec3::new(0.0, 0.0, 1.0));
         assert!(aabb.test_intersection(&ray, 0.0, 100.0));
 
-        let ray = Ray {
-            origin: Vec3::new(0.0, 0.0, -5.0),
-            dir: Vec3::new(0.0, 1.0, 0.0),
-        };
+        let ray = Ray::new(&Vec3::new(0.0, 0.0, -5.0), &Vec3::new(0.0, 1.0, 0.0));
         assert!(!aabb.test_intersection(&ray, 0.0, 100.0));
     }
 }
