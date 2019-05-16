@@ -59,7 +59,7 @@ pub fn load_scene(filename: &str) -> std::io::Result<Vec<Triangle>> {
             let mut v3 = [0f32; 3];
             v3.copy_from_slice(&tr_chunk[6..9]);
             triangles_list.push(Triangle {
-                vertices: [Vec3 { data: v1 }, Vec3 { data: v2 }, Vec3 { data: v3 }],
+                vertices: [Vec3::from(v1), Vec3::from(v2), Vec3::from(v3)],
             });
         }
     } else {
@@ -74,7 +74,7 @@ pub fn load_scene(filename: &str) -> std::io::Result<Vec<Triangle>> {
             let v3_idx = tr_chunk[2] * 3;
             v3.copy_from_slice(&vertices[v3_idx..v3_idx + 3]);
             triangles_list.push(Triangle {
-                vertices: [Vec3 { data: v1 }, Vec3 { data: v2 }, Vec3 { data: v3 }],
+                vertices: [Vec3::from(v1), Vec3::from(v2), Vec3::from(v3)],
             });
         }
     }

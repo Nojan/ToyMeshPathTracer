@@ -16,7 +16,7 @@ impl Aabb {
 
     pub fn is_empty(&self) -> bool {
         for idx in 0..3 {
-            if self.min.data[idx] > self.max.data[idx] {
+            if self.min.get(idx) > self.max.get(idx) {
                 return true;
             }
         }
@@ -37,11 +37,11 @@ impl Aabb {
             return false;
         }
         for idx in 0..3 {
-            let p_idx = point.data[idx];
-            if p_idx < self.min.data[idx] {
+            let p_idx = point.get(idx);
+            if p_idx < self.min.get(idx) {
                 return false;
             }
-            if p_idx > self.max.data[idx] {
+            if p_idx > self.max.get(idx) {
                 return false;
             }
         }

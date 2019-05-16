@@ -1,9 +1,9 @@
 use crate::random::*;
-use std::ops;
+use core::ops;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Vec3 {
-    pub data: [f32; 3],
+    data: [f32; 3],
 }
 
 impl Vec3 {
@@ -48,16 +48,20 @@ impl Vec3 {
         return normalize(&result);
     }
 
+    pub fn get(&self, idx: usize) -> f32 {
+        self.data[idx]
+    }
+
     pub fn x(&self) -> f32 {
-        self.data[0]
+        self.get(0)
     }
 
     pub fn y(&self) -> f32 {
-        self.data[1]
+        self.get(1)
     }
 
     pub fn z(&self) -> f32 {
-        self.data[2]
+        self.get(2)
     }
 
     pub fn length_sq(&self) -> f32 {
@@ -86,6 +90,12 @@ impl Vec3 {
 
     pub fn to_array(self) -> [f32; 3] {
         return self.data;
+    }
+}
+
+impl From<[f32; 3]> for Vec3 {
+    fn from(array: [f32; 3]) -> Vec3 {
+        Vec3::new(array[0], array[1], array[2])
     }
 }
 

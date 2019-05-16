@@ -31,11 +31,11 @@ fn compute_scene_boundary(triangle_list: &Vec<Triangle>) -> (Vec3, Vec3) {
 }
 
 fn gamma_correction(color: Vec3) -> Vec3 {
-    let mut result = Vec3::zero();
+    let mut result = [0f32; 3];
     for idx in 0..3 {
-        result.data[idx] = color.data[idx].sqrt();
+        result[idx] = color.get(idx).sqrt();
     }
-    return result;
+    return Vec3::from(result);
 }
 
 fn main() {

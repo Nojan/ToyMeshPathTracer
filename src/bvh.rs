@@ -20,10 +20,10 @@ struct BvhNode {
 impl Bvh {
     fn order_triangle(a: &Triangle, b: &Triangle, idx: usize) -> cmp::Ordering {
         let a_min = a.vertices.iter().fold(std::f32::INFINITY, |min, vertice| {
-            min.min(vertice.data[idx])
+            min.min(vertice.get(idx))
         });
         let b_min = b.vertices.iter().fold(std::f32::INFINITY, |min, vertice| {
-            min.min(vertice.data[idx])
+            min.min(vertice.get(idx))
         });
         a_min.partial_cmp(&b_min).unwrap()
     }
