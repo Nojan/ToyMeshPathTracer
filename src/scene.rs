@@ -11,7 +11,7 @@ pub struct Scene {
 
 const RAY_MIN: f32 = 0.01;
 const RAY_MAX: f32 = 100.0;
-const LIGHT_DIR: [f32;3] = [-0.5301519, 0.758786, 0.378395];
+const LIGHT_DIR: [f32; 3] = [-0.5301519, 0.758786, 0.378395];
 
 fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, scene: &Scene) -> Option<Hit> {
     if scene.bvh.is_some() {
@@ -40,11 +40,18 @@ fn hit_scene(ray: &Ray, min_t: f32, max_t: f32, scene: &Scene) -> Option<Hit> {
 fn scatter(ray: &Ray, hit: &Hit, rng_state: &mut u32, scene: &Scene) -> (Ray, Vec3) {
     let mut light_ray = Vec3::zero();
     let target = hit.normal + Vec3::rand_unit(rng_state);
-    let scattered = Ray::new(&hit.pos, &normalize(&target));
+    let scattered = Ray::new(&hit.pos, &target.normalize());
 
-    if hit_scene(&Ray::new(&hit.pos, &Vec3::from(LIGHT_DIR)), RAY_MIN, RAY_MAX, scene).is_none() {
-        let nl = hit.normal * dot(&hit.normal, &ray.dir()).signum() * -1.0;
-        light_ray = Vec3::fill(0.7) * 0.0f32.max(dot(&Vec3::from(LIGHT_DIR), &nl));
+    if hit_scene(
+        &Ray::new(&hit.pos, &Vec3::from(LIGHT_DIR)),
+        RAY_MIN,
+        RAY_MAX,
+        scene,
+    )
+    .is_none()
+    {
+        let nl = hit.normal * Vec3::dot(&hit.normal, &ray.dir()).signum() * -1.0;
+        light_ray = Vec3::fill(0.7) * 0.0f32.max(Vec3::dot(&Vec3::from(LIGHT_DIR), &nl));
     }
 
     return (scattered, light_ray);

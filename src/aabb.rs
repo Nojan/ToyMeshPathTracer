@@ -56,8 +56,8 @@ impl Aabb {
             }
         } else {
             Aabb {
-                min: min(&self.min, &point),
-                max: max(&self.max, &point),
+                min: self.min.min(&point),
+                max: self.max.max(&point),
             }
         }
     }
@@ -70,8 +70,8 @@ impl Aabb {
             }
         } else {
             Aabb {
-                min: min(&a.min, &b.min),
-                max: max(&a.max, &b.max),
+                min: Vec3::min(&a.min, &b.min),
+                max: Vec3::max(&a.max, &b.max),
             }
         }
     }
@@ -80,8 +80,8 @@ impl Aabb {
         let t0 = (self.min - ray.origin()) * ray.dir_inv();
         let t1 = (self.max - ray.origin()) * ray.dir_inv();
 
-        let tsmaller = min(&t0, &t1);
-        let tbigger = max(&t0, &t1);
+        let tsmaller = Vec3::min(&t0, &t1);
+        let tbigger = Vec3::max(&t0, &t1);
 
         let tmin = tmin.max(tsmaller.hmax());
         let tmax = tmax.min(tbigger.hmin());

@@ -21,7 +21,7 @@ fn compute_scene_boundary(triangle_list: &Vec<Triangle>) -> (Vec3, Vec3) {
             .vertices
             .iter()
             .fold((min_b, max_b), |(min_tr, max_tr), vertice| {
-                (min(&min_tr, &vertice), max(&max_tr, &vertice))
+                (Vec3::min(&min_tr, &vertice), Vec3::max(&max_tr, &vertice))
             })
     };
     triangle_list.iter().fold(
@@ -135,7 +135,7 @@ fn main() {
                 // saturate
                 let color_0 = Vec3::fill(0.0);
                 let color_1 = Vec3::fill(1.0);
-                color = max(&color_0, &min(&color_1, &color));
+                color = Vec3::max(&color_0, &Vec3::min(&color_1, &color));
 
                 *data_iter.next().unwrap() = (color.x() * 255.0) as u8;
                 *data_iter.next().unwrap() = (color.y() * 255.0) as u8;

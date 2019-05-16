@@ -25,9 +25,9 @@ impl Camera {
         let theta = vfov * core::f32::consts::PI / 180.0;
         let half_height = (theta / 2.0).tan();
         let half_width = aspect * half_height;
-        let w = normalize(&(*look_from - *look_at));
-        let u = normalize(&cross(&up, &w));
-        let v = cross(&w, &u);
+        let w = (*look_from - *look_at).normalize();
+        let u = Vec3::cross(&up, &w).normalize();
+        let v = Vec3::cross(&w, &u);
         Camera {
             origin: *look_from,
             lower_left_corner: *look_from - u * half_width - v * half_height - w,
@@ -45,6 +45,6 @@ impl Camera {
         let ray_origin = self.origin + offset;
         let ray_normal =
             self.lower_left_corner + self.horizontal * s + self.vertical * t - self.origin;
-        Ray::new(&ray_origin, &normalize(&ray_normal))
+        Ray::new(&ray_origin, &ray_normal.normalize())
     }
 }

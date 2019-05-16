@@ -45,7 +45,7 @@ impl Vec3 {
         for idx in 0..3 {
             result.data[idx] = (random_float01(rng_state) - 0.5) * 2.0;
         }
-        return normalize(&result);
+        return result.normalize();
     }
 
     pub fn get(&self, idx: usize) -> f32 {
@@ -65,7 +65,7 @@ impl Vec3 {
     }
 
     pub fn length_sq(&self) -> f32 {
-        dot(&self, &self)
+        Vec3::dot(&self, &self)
     }
 
     pub fn length(&self) -> f32 {
@@ -91,47 +91,47 @@ impl Vec3 {
     pub fn to_array(self) -> [f32; 3] {
         return self.data;
     }
+
+    pub fn min(&self, b: &Vec3) -> Vec3 {
+        let mut result = Vec3::zero();
+        for idx in 0..3 {
+            result.data[idx] = self.data[idx].min(b.data[idx]);
+        }
+        return result;
+    }
+
+    pub fn max(&self, b: &Vec3) -> Vec3 {
+        let mut result = Vec3::zero();
+        for idx in 0..3 {
+            result.data[idx] = self.data[idx].max(b.data[idx]);
+        }
+        return result;
+    }
+
+    pub fn dot(&self, b: &Vec3) -> f32 {
+        let mut result = 0f32;
+        for idx in 0..3 {
+            result += self.data[idx] * b.data[idx];
+        }
+        return result;
+    }
+
+    pub fn cross(&self, b: &Vec3) -> Vec3 {
+        let x = self.y() * b.z() - self.z() * b.y();
+        let y = -(self.x() * b.z() - self.z() * b.x());
+        let z = self.x() * b.y() - self.y() * b.x();
+        Vec3::from([x, y, z])
+    }
+
+    pub fn normalize(&self) -> Vec3 {
+        *self * (1.0f32 / self.length())
+    }
 }
 
 impl From<[f32; 3]> for Vec3 {
     fn from(array: [f32; 3]) -> Vec3 {
         Vec3::new(array[0], array[1], array[2])
     }
-}
-
-pub fn min(a: &Vec3, b: &Vec3) -> Vec3 {
-    let mut result = Vec3::zero();
-    for idx in 0..3 {
-        result.data[idx] = a.data[idx].min(b.data[idx]);
-    }
-    return result;
-}
-
-pub fn max(a: &Vec3, b: &Vec3) -> Vec3 {
-    let mut result = Vec3::zero();
-    for idx in 0..3 {
-        result.data[idx] = a.data[idx].max(b.data[idx]);
-    }
-    return result;
-}
-
-pub fn dot(a: &Vec3, b: &Vec3) -> f32 {
-    let mut result = 0f32;
-    for idx in 0..3 {
-        result += a.data[idx] * b.data[idx];
-    }
-    return result;
-}
-
-pub fn cross(a: &Vec3, b: &Vec3) -> Vec3 {
-    let x = a.y() * b.z() - a.z() * b.y();
-    let y = -(a.x() * b.z() - a.z() * b.x());
-    let z = a.x() * b.y() - a.y() * b.x();
-    Vec3 { data: [x, y, z] }
-}
-
-pub fn normalize(v: &Vec3) -> Vec3 {
-    *v * (1.0f32 / v.length())
 }
 
 impl ops::Add<Vec3> for Vec3 {
@@ -244,7 +244,7 @@ mod tests {
     #[test]
     fn dot() {
         let v1 = Vec3::new(0.0, -2.0, 0.0);
-        assert_eq!(super::dot(&v1, &v1), 4.0);
+        assert_eq!(Vec3::dot(&v1, &v1), 4.0);
     }
 
     #[test]
@@ -256,7 +256,7 @@ mod tests {
     #[test]
     fn normalize() {
         let v1 = Vec3::new(0.0, -2.0, 0.0);
-        assert_eq!(super::normalize(&v1).length(), 1.0);
+        assert_eq!(v1.normalize().length(), 1.0);
     }
 
     #[test]
@@ -264,15 +264,15 @@ mod tests {
         let v1 = Vec3::new(0.0, 1.0, 0.0);
         let v2 = Vec3::new(0.0, 0.0, 1.0);
         let v3 = Vec3::new(-1.0, 0.0, 0.0);
-        assert_eq!(v3, super::cross(&v2, &v1));
+        assert_eq!(v3, Vec3::cross(&v2, &v1));
     }
 
     #[test]
     fn min_max() {
         let v1 = Vec3::new(0.0, 1.0, 2.0);
         let v2 = Vec3::new(-1.0, 10.0, 0.5);
-        let v_max = max(&v1, &v2);
-        let v_min = min(&v1, &v2);
+        let v_max = Vec3::max(&v1, &v2);
+        let v_min = Vec3::min(&v1, &v2);
 
         for idx in 0..3 {
             assert_eq!(v_max.data[idx], v1.data[idx].max(v2.data[idx]));

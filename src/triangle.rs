@@ -16,25 +16,25 @@ impl Triangle {
     pub fn intersect(&self, ray: &Ray, tmin: f32, tmax: f32) -> Option<Hit> {
         let edge0 = self.vertices[1] - self.vertices[0];
         let edge1 = self.vertices[2] - self.vertices[1];
-        let normal = normalize(&cross(&edge0, &edge1));
-        let plane_offset = dot(&self.vertices[0], &normal);
+        let normal = Vec3::cross(&edge0, &edge1).normalize();
+        let plane_offset = Vec3::dot(&self.vertices[0], &normal);
 
         let p0 = ray.point_at(tmin);
         let p1 = ray.point_at(tmax);
 
-        let offset0 = dot(&p0, &normal);
-        let offset1 = dot(&p1, &normal);
+        let offset0 = Vec3::dot(&p0, &normal);
+        let offset1 = Vec3::dot(&p1, &normal);
 
         if (offset0 - plane_offset) * (offset1 - plane_offset) <= 0.0 {
             let t = tmin + (tmax - tmin) * (plane_offset - offset0) / (offset1 - offset0);
             let p = ray.point_at(t);
 
-            let c0 = cross(&edge0, &(p - self.vertices[0]));
-            let c1 = cross(&edge1, &(p - self.vertices[1]));
-            if dot(&c0, &c1) >= 0.0 {
+            let c0 = Vec3::cross(&edge0, &(p - self.vertices[0]));
+            let c1 = Vec3::cross(&edge1, &(p - self.vertices[1]));
+            if Vec3::dot(&c0, &c1) >= 0.0 {
                 let edge2 = self.vertices[0] - self.vertices[2];
-                let c2 = cross(&edge2, &(p - self.vertices[2]));
-                if dot(&c1, &c2) >= 0.0 {
+                let c2 = Vec3::cross(&edge2, &(p - self.vertices[2]));
+                if Vec3::dot(&c1, &c2) >= 0.0 {
                     let hit = Hit {
                         pos: p,
                         normal: normal,
