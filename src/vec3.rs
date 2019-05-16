@@ -83,6 +83,10 @@ impl Vec3 {
         }
         return result;
     }
+
+    pub fn to_array(self) -> [f32; 3] {
+        return self.data;
+    }
 }
 
 pub fn min(a: &Vec3, b: &Vec3) -> Vec3 {
@@ -186,51 +190,50 @@ mod tests {
 
     #[test]
     fn cmp() {
-        let zero = Vec3 { data: [0f32; 3] };
+        let zero = Vec3::zero();
         assert_eq!(zero, zero);
-        let one = Vec3 { data: [1f32; 3] };
+        assert_eq!([0f32; 3], zero.to_array());
+        let one = Vec3::fill(1.0);
         assert_ne!(zero, one);
     }
 
     #[test]
     fn ops_add() {
-        let zero = Vec3 { data: [0f32; 3] };
-        let one = Vec3 { data: [1f32; 3] };
+        let zero = Vec3::fill(0.0);
+        let one = Vec3::fill(1.0);
         assert_ne!(zero, one);
         assert_eq!(zero + one, one);
     }
 
     #[test]
     fn ops_sub() {
-        let zero = Vec3 { data: [0f32; 3] };
-        let one = Vec3 { data: [1f32; 3] };
-        let two = Vec3 { data: [2f32; 3] };
+        let zero = Vec3::fill(0.0);
+        let one = Vec3::fill(1.0);
+        let two = Vec3::fill(2.0);
         assert_ne!(two - zero, one);
         assert_eq!(two - one, one);
     }
 
     #[test]
     fn ops_mul() {
-        let zero = Vec3 { data: [0f32; 3] };
-        let one = Vec3 { data: [1f32; 3] };
-        let two = Vec3 { data: [2f32; 3] };
+        let zero = Vec3::fill(0.0);
+        let one = Vec3::fill(1.0);
+        let two = Vec3::fill(2.0);
         assert_eq!(two * zero, zero);
         assert_eq!(two * one, two);
     }
 
     #[test]
     fn ops_div() {
-        let one = Vec3 { data: [1f32; 3] };
-        let two = Vec3 { data: [2f32; 3] };
+        let one = Vec3::fill(1.0);
+        let two = Vec3::fill(2.0);
         assert_eq!(two / two, one);
         assert_eq!(two / one, two);
     }
 
     #[test]
     fn dot() {
-        let v1 = Vec3 {
-            data: [0.0, -2.0, 0.0],
-        };
+        let v1 = Vec3::new(0.0, -2.0, 0.0);
         assert_eq!(super::dot(&v1, &v1), 4.0);
     }
 
