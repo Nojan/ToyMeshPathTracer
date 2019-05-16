@@ -62,16 +62,16 @@ impl Aabb {
         }
     }
 
-    pub fn union_aabb(a: &Aabb, b: &Aabb) -> Aabb {
-        if a.is_empty() {
+    pub fn union(&self, b: &Aabb) -> Aabb {
+        if self.is_empty() {
             Aabb {
                 min: b.min,
                 max: b.max,
             }
         } else {
             Aabb {
-                min: Vec3::min(&a.min, &b.min),
-                max: Vec3::max(&a.max, &b.max),
+                min: Vec3::min(&self.min, &b.min),
+                max: Vec3::max(&self.max, &b.max),
             }
         }
     }
@@ -131,7 +131,7 @@ mod tests {
         assert!(!aabb1.contain(&v0));
         assert!(aabb1.contain(&v1));
 
-        let aabb = Aabb::union_aabb(&aabb0, &aabb1);
+        let aabb = Aabb::union(&aabb0, &aabb1);
         assert!(aabb.contain(&v0));
         assert!(aabb.contain(&v1));
     }

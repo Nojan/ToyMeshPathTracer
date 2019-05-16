@@ -70,7 +70,7 @@ impl Bvh {
             node.d2 = tri_count;
             node.is_leaf = true;
             node.v = triangle_list.iter().fold(Aabb::empty(), |aabb, tr| {
-                Aabb::union_aabb(&aabb, &Bvh::triangle_aabb(tr))
+                Aabb::union(&aabb, &Bvh::triangle_aabb(tr))
             });
         } else {
             //let split_idx = triangle_list.len() / 2;
@@ -81,15 +81,15 @@ impl Bvh {
                         .iter()
                         .take(idx)
                         .fold(Aabb::empty(), |aabb, tr| {
-                            Aabb::union_aabb(&aabb, &Bvh::triangle_aabb(tr))
+                            Aabb::union(&aabb, &Bvh::triangle_aabb(tr))
                         });
                     let right_aabb = triangle_list
                         .iter()
                         .skip(idx)
                         .fold(Aabb::empty(), |aabb, tr| {
-                            Aabb::union_aabb(&aabb, &Bvh::triangle_aabb(tr))
+                            Aabb::union(&aabb, &Bvh::triangle_aabb(tr))
                         });
-                    let total_aabb = Aabb::union_aabb(&left_aabb, &right_aabb);
+                    let total_aabb = Aabb::union(&left_aabb, &right_aabb);
                     let cost: f32 = 0.125f32
                         + (idx as f32 * left_aabb.surface_area()
                             + (triangle_list.len() - idx) as f32 * right_aabb.surface_area())
@@ -114,7 +114,7 @@ impl Bvh {
                 rng,
             );
             node.is_leaf = false;
-            node.v = Aabb::union_aabb(&bvh[node.d1].v, &bvh[node.d2].v);
+            node.v = Aabb::union(&bvh[node.d1].v, &bvh[node.d2].v);
         }
 
         bvh[node_idx] = node;
