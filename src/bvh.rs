@@ -6,6 +6,12 @@ use crate::triangle::*;
 
 use std::cmp;
 
+#[derive(Copy, Clone)]
+pub enum HitType {
+    Closest,
+    Any,
+}
+
 pub struct Bvh {
     nodes: Vec<BvhNode>,
 }
@@ -134,6 +140,7 @@ impl Bvh {
         ray: &Ray,
         tmin: f32,
         tmax: &mut f32,
+        hit_type: HitType,
         triangles: &[Triangle],
     ) -> Option<Hit> {
         let node = &self.nodes[idx];
@@ -149,15 +156,25 @@ impl Bvh {
                     let tri_hit = tri_hit.unwrap();
                     *tmax = tri_hit.t;
                     hit = Some(tri_hit);
+                    if let HitType::Any = hit_type {
+                        return hit;
+                    }
                 }
             }
         } else {
-            let left_hit = self.intersect_impl(node.d1, ray, tmin, tmax, triangles);
-            let right_hit = self.intersect_impl(node.d2, ray, tmin, tmax, triangles);
+            let left_hit = self.intersect_impl(node.d1, ray, tmin, tmax, hit_type, triangles);
+            if left_hit.is_some() {
+                hit = left_hit;
+                if let HitType::Any = hit_type {
+                    return hit;
+                }
+            }
+            let right_hit = self.intersect_impl(node.d2, ray, tmin, tmax, hit_type, triangles);
             if right_hit.is_some() {
                 hit = right_hit;
-            } else {
-                hit = left_hit;
+                if let HitType::Any = hit_type {
+                    return hit;
+                }
             }
         }
 
@@ -169,17 +186,11 @@ impl Bvh {
         ray: &Ray,
         tmin: f32,
         tmax: f32,
+        hit_type: HitType,
         triangles: &[Triangle],
     ) -> Option<Hit> {
         let mut local_tmax = tmax;
-        self.intersect_impl(0, ray, tmin, &mut local_tmax, triangles)
+        self.intersect_impl(0, ray, tmin, &mut local_tmax, hit_type, triangles)
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn empty() {}
-}
