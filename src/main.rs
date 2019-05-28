@@ -106,7 +106,6 @@ fn main() {
     const WIDTH: usize = 640;
     const HEIGHT: usize = 360;
     let mut data = [0u8; 3 * WIDTH * HEIGHT];
-    let mut data_iter = data.iter_mut();
 
     // trace image
     let mut ray_total_count = 0usize;
@@ -117,31 +116,31 @@ fn main() {
         const SPP: usize = 4;
         const SPP_INV: f32 = 1.0 / (SPP as f32);
 
-        for y in 0..HEIGHT {
-            let mut rng_state: u32 = (y as u32) * 9781 + 1;
-            for x in 0..WIDTH {
-                let mut color = Vec3::zero();
-                for _s in 0..SPP {
-                    let u = (x as f32) * inv_width;
-                    let v = 1.0 - (y as f32) * inv_height;
-                    let ray = camera.get_ray(u, v, &mut rng_state);
-                    let (ray_color, ray_count) = scene::trace(&ray, 10, &mut rng_state, &scene);
-                    color = color + ray_color;
-                    ray_total_count += ray_count;
-                }
-                color = color * SPP_INV;
-                color = gamma_correction(color);
-
-                // saturate
-                let color_0 = Vec3::fill(0.0);
-                let color_1 = Vec3::fill(1.0);
-                color = Vec3::max(&color_0, &Vec3::min(&color_1, &color));
-
-                *data_iter.next().unwrap() = (color.x() * 255.0) as u8;
-                *data_iter.next().unwrap() = (color.y() * 255.0) as u8;
-                *data_iter.next().unwrap() = (color.z() * 255.0) as u8;
+        let mut rng_state: u32 = (WIDTH as u32) * 9781 + 1;
+        data.chunks_mut(3).enumerate().for_each(|(idx, data)| {
+            let mut color = Vec3::zero();
+            let n = idx;
+            let y = n / WIDTH;
+            let x = n - y * WIDTH;
+            let u = (x as f32) * inv_width;
+            let v = 1.0 - (y as f32) * inv_height;
+            for _s in 0..SPP {
+                let ray = camera.get_ray(u, v, &mut rng_state);
+                let (ray_color, ray_count) = scene::trace(&ray, 10, &mut rng_state, &scene);
+                color = color + ray_color;
+                ray_total_count += ray_count;
             }
-        }
+            color = color * SPP_INV;
+            color = gamma_correction(color);
+
+            // saturate
+            let color_0 = Vec3::fill(0.0);
+            let color_1 = Vec3::fill(1.0);
+            color = Vec3::max(&color_0, &Vec3::min(&color_1, &color));
+            for i in 0..3 {
+                data[i] = (255.0 * color.get(i)) as u8;
+            }
+        });
     }
     let trace_end = Instant::now();
     let trace_duration = trace_end.duration_since(trace_begin);
