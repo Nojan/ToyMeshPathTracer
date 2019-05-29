@@ -5,3 +5,4 @@ authors = ["Mathias Labeyrie <mathias.labeyrie@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+rayon = "1.0.3"

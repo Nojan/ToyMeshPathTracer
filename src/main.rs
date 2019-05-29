@@ -1,3 +1,5 @@
+extern crate rayon;
+
 mod aabb;
 mod bvh;
 mod camera;
@@ -10,8 +12,10 @@ mod scene;
 mod triangle;
 mod vec3;
 
-use camera::*;
 use std::time::Instant;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use rayon::prelude::*;
+use camera::*;
 use triangle::*;
 use vec3::*;
 
@@ -108,7 +112,7 @@ fn main() {
     let mut data = [0u8; 3 * WIDTH * HEIGHT];
 
     // trace image
-    let mut ray_total_count = 0usize;
+    let ray_total_count = AtomicUsize::new(0);
     let trace_begin = Instant::now();
     {
         let inv_width = 1.0f32 / (WIDTH as f32);
@@ -116,9 +120,9 @@ fn main() {
         const SPP: usize = 4;
         const SPP_INV: f32 = 1.0 / (SPP as f32);
 
-        let mut rng_state: u32 = (WIDTH as u32) * 9781 + 1;
-        data.chunks_mut(3).enumerate().for_each(|(idx, data)| {
+        data.par_chunks_mut(3).enumerate().for_each(|(idx, data)| {
             let mut color = Vec3::zero();
+            let mut rng_state: u32 = (idx as u32) * 9781 + 1;
             let n = idx;
             let y = n / WIDTH;
             let x = n - y * WIDTH;
@@ -128,7 +132,7 @@ fn main() {
                 let ray = camera.get_ray(u, v, &mut rng_state);
                 let (ray_color, ray_count) = scene::trace(&ray, 10, &mut rng_state, &scene);
                 color = color + ray_color;
-                ray_total_count += ray_count;
+                ray_total_count.fetch_add(ray_count, Ordering::SeqCst);
             }
             color = color * SPP_INV;
             color = gamma_correction(color);
@@ -146,6 +150,7 @@ fn main() {
     let trace_duration = trace_end.duration_since(trace_begin);
     let durations_sec =
         (trace_duration.as_secs() as f32) + (trace_duration.subsec_millis() as f32) / 1000.0;
+    let ray_total_count = ray_total_count.load(Ordering::SeqCst);
     println!("{} rays in {} s", ray_total_count, durations_sec);
     println!(
         "{} K rays per second",
