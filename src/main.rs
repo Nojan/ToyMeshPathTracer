@@ -47,10 +47,10 @@ fn main() {
     println!("Loading {}", filename);
     let mut triangles = obj_loader::load_scene(filename).expect("!?");
     println!("Loaded {} triangles", triangles.len());
+    let (scene_min, scene_max) = compute_scene_boundary(&triangles);
     {
         // add two triangles that are right "under the scene" and covering a larger area than the scene
         // itself, to serve as a "floor"
-        let (scene_min, scene_max) = compute_scene_boundary(&triangles);
         let floor_size = (scene_max - scene_min) * 0.7;
         let v0 = Vec3::new(
             scene_min.x() - floor_size.x(),
@@ -83,7 +83,6 @@ fn main() {
     };
     scene.bvh = Some(bvh::Bvh::create(&mut scene.triangle_list[..]));
     let scene = scene;
-    let (scene_min, scene_max) = compute_scene_boundary(&scene.triangle_list);
 
     // place the camera
     let scene_size = scene_max - scene_min;
