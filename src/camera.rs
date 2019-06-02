@@ -44,7 +44,7 @@ impl Camera {
         let offset = self.u * rd.x() + self.v * rd.y();
         let ray_origin = self.origin + offset;
         let ray_normal =
-            self.lower_left_corner + self.horizontal * s + self.vertical * t - self.origin;
+            self.lower_left_corner + self.horizontal * s + self.vertical * t - self.origin - offset;
         Ray::new(&ray_origin, &ray_normal.normalize())
     }
 }
