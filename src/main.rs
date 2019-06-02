@@ -125,9 +125,9 @@ fn main() {
             let n = idx;
             let y = n / WIDTH;
             let x = n - y * WIDTH;
-            let u = (x as f32) * inv_width;
-            let v = 1.0 - (y as f32) * inv_height;
             for _s in 0..SPP {
+                let u = (x as f32 + random::random_float01(&mut rng_state)) * inv_width;
+                let v = 1.0 - (y as f32 + random::random_float01(&mut rng_state)) * inv_height;
                 let ray = camera.get_ray(u, v, &mut rng_state);
                 let (ray_color, ray_count) = scene::trace(&ray, 10, &mut rng_state, &scene);
                 color = color + ray_color;
