@@ -94,7 +94,7 @@ fn main() {
     };
     let look_at = scene_center + scene_size * Vec3::new(0.0, -0.1, 0.0);
     let dist_to_focus = (look_from - look_at).length();
-    let aperture = 0.03;
+    let aperture = 0.0;
     let aspect = (WIDTH as f32) / (HEIGHT as f32);
     let camera = Camera::look_at(
         &look_from,
