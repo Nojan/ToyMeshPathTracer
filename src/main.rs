@@ -12,10 +12,10 @@ mod scene;
 mod triangle;
 mod vec3;
 
-use std::time::Instant;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use rayon::prelude::*;
 use camera::*;
+use rayon::prelude::*;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Instant;
 use triangle::*;
 use vec3::*;
 
@@ -40,6 +40,12 @@ fn gamma_correction(color: Vec3) -> Vec3 {
         result[idx] = color.get(idx).sqrt();
     }
     return Vec3::from(result);
+}
+
+const fn chunk_encode(idx: usize, chunk_width: usize, width: usize) -> usize {
+    let y = idx / chunk_width;
+    let x = idx - y * chunk_width;
+    x + y * width
 }
 
 fn main() {
@@ -108,7 +114,7 @@ fn main() {
 
     const WIDTH: usize = 640;
     const HEIGHT: usize = 360;
-    let mut data = [0u8; 3 * WIDTH * HEIGHT];
+    let mut data = [Vec3::zero();  WIDTH * HEIGHT];
 
     // trace image
     let ray_total_count = AtomicUsize::new(0);
@@ -119,7 +125,7 @@ fn main() {
         const SPP: usize = 4;
         const SPP_INV: f32 = 1.0 / (SPP as f32);
 
-        data.par_chunks_mut(3).enumerate().for_each(|(idx, data)| {
+        data.par_iter_mut().enumerate().for_each(|(idx, data)| {
             let mut color = Vec3::zero();
             let mut rng_state: u32 = (idx as u32) * 9781 + 1;
             let n = idx;
@@ -139,12 +145,10 @@ fn main() {
             // saturate
             let color_0 = Vec3::fill(0.0);
             let color_1 = Vec3::fill(1.0);
-            color = Vec3::max(&color_0, &Vec3::min(&color_1, &color));
-            for i in 0..3 {
-                data[i] = (255.0 * color.get(i)) as u8;
-            }
+            *data = Vec3::max(&color_0, &Vec3::min(&color_1, &color));
         });
     }
+    let data = data;
     let trace_end = Instant::now();
     let trace_duration = trace_end.duration_since(trace_begin);
     let durations_sec =
@@ -156,5 +160,11 @@ fn main() {
         (ray_total_count as f32) / durations_sec / 1000.0
     );
 
-    ppm_writer::write("test.ppm", WIDTH, HEIGHT, &data);
+    let mut img_data = [0u8;  3*WIDTH * HEIGHT];
+    img_data.chunks_mut(3).zip(data.iter()).for_each(|(color, data)| {
+        for i in 0..3 {
+            color[i] = (255.0 * data.get(i)) as u8;
+        }
+    });
+    ppm_writer::write("test.ppm", WIDTH, HEIGHT, &img_data);
 }
