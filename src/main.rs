@@ -114,7 +114,10 @@ fn main() {
 
     const WIDTH: usize = 640;
     const HEIGHT: usize = 360;
-    let mut data = [Vec3::zero();  WIDTH * HEIGHT];
+    const BLOCK_LENGTH: usize = 8;
+    const BLOCK_SIZE: usize = BLOCK_LENGTH * BLOCK_LENGTH;
+    const BLOCK_WIDTH: usize = WIDTH / BLOCK_LENGTH;
+    let mut data = [Vec3::zero(); WIDTH * HEIGHT];
 
     // trace image
     let ray_total_count = AtomicUsize::new(0);
@@ -125,28 +128,37 @@ fn main() {
         const SPP: usize = 4;
         const SPP_INV: f32 = 1.0 / (SPP as f32);
 
-        data.par_iter_mut().enumerate().for_each(|(idx, data)| {
-            let mut color = Vec3::zero();
-            let mut rng_state: u32 = (idx as u32) * 9781 + 1;
-            let n = idx;
-            let y = n / WIDTH;
-            let x = n - y * WIDTH;
-            for _s in 0..SPP {
-                let u = (x as f32 + random::random_float01(&mut rng_state)) * inv_width;
-                let v = 1.0 - (y as f32 + random::random_float01(&mut rng_state)) * inv_height;
-                let ray = camera.get_ray(u, v, &mut rng_state);
-                let (ray_color, ray_count) = scene::trace(&ray, 10, &mut rng_state, &scene);
-                color = color + ray_color;
-                ray_total_count.fetch_add(ray_count, Ordering::SeqCst);
-            }
-            color = color * SPP_INV;
-            color = gamma_correction(color);
+        data.par_chunks_mut(BLOCK_SIZE)
+            .enumerate()
+            .for_each(|(block_idx, block)| {
+                let mut rng_state: u32 = (block_idx as u32) * 9781 + 1;
+                let block_y = block_idx / BLOCK_WIDTH;
+                let block_x = block_idx - block_y * BLOCK_WIDTH;
+                let block_offset = block_x * BLOCK_LENGTH + block_y * BLOCK_LENGTH * WIDTH;
 
-            // saturate
-            let color_0 = Vec3::fill(0.0);
-            let color_1 = Vec3::fill(1.0);
-            *data = Vec3::max(&color_0, &Vec3::min(&color_1, &color));
-        });
+                block.iter_mut().enumerate().for_each(|(idx, pixel)| {
+                    let mut color = Vec3::zero();
+                    let n = chunk_encode(idx, BLOCK_LENGTH, WIDTH) + block_offset;
+                    let y = n / WIDTH;
+                    let x = n - y * WIDTH;
+                    for _s in 0..SPP {
+                        let u = (x as f32 + random::random_float01(&mut rng_state)) * inv_width;
+                        let v =
+                            1.0 - (y as f32 + random::random_float01(&mut rng_state)) * inv_height;
+                        let ray = camera.get_ray(u, v, &mut rng_state);
+                        let (ray_color, ray_count) = scene::trace(&ray, 10, &mut rng_state, &scene);
+                        color = color + ray_color;
+                        ray_total_count.fetch_add(ray_count, Ordering::SeqCst);
+                    }
+                    color = color * SPP_INV;
+                    color = gamma_correction(color);
+
+                    // saturate
+                    let color_0 = Vec3::fill(0.0);
+                    let color_1 = Vec3::fill(1.0);
+                    *pixel = Vec3::max(&color_0, &Vec3::min(&color_1, &color));
+                });
+            });
     }
     let data = data;
     let trace_end = Instant::now();
@@ -160,11 +172,28 @@ fn main() {
         (ray_total_count as f32) / durations_sec / 1000.0
     );
 
-    let mut img_data = [0u8;  3*WIDTH * HEIGHT];
-    img_data.chunks_mut(3).zip(data.iter()).for_each(|(color, data)| {
-        for i in 0..3 {
-            color[i] = (255.0 * data.get(i)) as u8;
-        }
-    });
+    let mut img_data = [0u8; 3 * WIDTH * HEIGHT];
+    img_data
+        .chunks_mut(3)
+        .zip(data.iter())
+        .for_each(|(color, data)| {
+            for i in 0..3 {
+                color[i] = (255.0 * data.get(i)) as u8;
+            }
+        });
+    data.chunks(BLOCK_SIZE)
+        .enumerate()
+        .for_each(|(block_idx, block)| {
+            let block_y = block_idx / BLOCK_WIDTH;
+            let block_x = block_idx - block_y * BLOCK_WIDTH;
+            let block_offset = block_x * BLOCK_LENGTH + block_y * BLOCK_LENGTH * WIDTH;
+
+            block.iter().enumerate().for_each(|(idx, pixel)| {
+                let n = chunk_encode(idx, BLOCK_LENGTH, WIDTH) + block_offset;
+                for i in 0..3 {
+                    img_data[n * 3 + i] = (255.0 * pixel.get(i)) as u8;
+                }
+            });
+        });
     ppm_writer::write("test.ppm", WIDTH, HEIGHT, &img_data);
 }
