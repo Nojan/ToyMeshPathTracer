@@ -150,13 +150,7 @@ fn main() {
                         color = color + ray_color;
                         ray_total_count.fetch_add(ray_count, Ordering::SeqCst);
                     }
-                    color = color * SPP_INV;
-                    color = gamma_correction(color);
-
-                    // saturate
-                    let color_0 = Vec3::fill(0.0);
-                    let color_1 = Vec3::fill(1.0);
-                    *pixel = Vec3::max(&color_0, &Vec3::min(&color_1, &color));
+                    *pixel = color * SPP_INV;
                 });
             });
     }
@@ -189,9 +183,14 @@ fn main() {
             let block_offset = block_x * BLOCK_LENGTH + block_y * BLOCK_LENGTH * WIDTH;
 
             block.iter().enumerate().for_each(|(idx, pixel)| {
+                let color = gamma_correction(*pixel);
+                // saturate
+                let color_0 = Vec3::fill(0.0);
+                let color_1 = Vec3::fill(1.0);
+                let color = Vec3::max(&color_0, &Vec3::min(&color_1, &color));
                 let n = chunk_encode(idx, BLOCK_LENGTH, WIDTH) + block_offset;
                 for i in 0..3 {
-                    img_data[n * 3 + i] = (255.0 * pixel.get(i)) as u8;
+                    img_data[n * 3 + i] = (255.0 * color.get(i)) as u8;
                 }
             });
         });
