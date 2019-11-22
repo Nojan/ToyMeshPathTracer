@@ -117,7 +117,7 @@ fn main() {
     const BLOCK_LENGTH: usize = 8;
     const BLOCK_SIZE: usize = BLOCK_LENGTH * BLOCK_LENGTH;
     const BLOCK_WIDTH: usize = WIDTH / BLOCK_LENGTH;
-    let mut data = [Vec3::zero(); WIDTH * HEIGHT];
+    let mut data = vec![Vec3::zero(); WIDTH * HEIGHT];
 
     // trace image
     let ray_total_count = AtomicUsize::new(0);
@@ -166,7 +166,7 @@ fn main() {
         (ray_total_count as f32) / durations_sec / 1000.0
     );
 
-    let mut img_data = [0u8; 3 * WIDTH * HEIGHT];
+    let mut img_data = vec![0u8; 3 * WIDTH * HEIGHT];
     img_data
         .chunks_mut(3)
         .zip(data.iter())
