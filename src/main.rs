@@ -49,6 +49,7 @@ const fn chunk_encode(idx: usize, chunk_width: usize, width: usize) -> usize {
 }
 
 fn main() {
+    let loading_begin = Instant::now();
     let filename = "data/suzanne.obj";
     println!("Loading {}", filename);
     let mut triangles = obj_loader::load_scene(filename).expect("!?");
@@ -83,12 +84,21 @@ fn main() {
         triangles.push(tr0);
         triangles.push(tr1);
     }
+    let triangle_count = triangles.len();
     let mut scene = scene::Scene {
         triangle_list: triangles,
         bvh: None,
     };
     scene.bvh = Some(bvh::Bvh::create(&mut scene.triangle_list[..]));
     let scene = scene;
+    let loading_end = Instant::now();
+    let loading_duration = loading_end.duration_since(loading_begin);
+    let durations_sec =
+        (loading_duration.as_secs() as f32) + (loading_duration.subsec_millis() as f32) / 1000.0;
+    println!(
+        "Initialized scene '{}' ({} tris) in {}s",
+        filename, triangle_count, durations_sec
+    );
 
     // place the camera
     let scene_size = scene_max - scene_min;
@@ -114,6 +124,7 @@ fn main() {
 
     const WIDTH: usize = 640;
     const HEIGHT: usize = 360;
+    const SPP: usize = 4;
     const BLOCK_LENGTH: usize = 8;
     const BLOCK_SIZE: usize = BLOCK_LENGTH * BLOCK_LENGTH;
     const BLOCK_WIDTH: usize = WIDTH / BLOCK_LENGTH;
@@ -125,7 +136,6 @@ fn main() {
     {
         let inv_width = 1.0f32 / (WIDTH as f32);
         let inv_height = 1.0f32 / (HEIGHT as f32);
-        const SPP: usize = 4;
         const SPP_INV: f32 = 1.0 / (SPP as f32);
 
         data.par_chunks_mut(BLOCK_SIZE)
@@ -160,9 +170,13 @@ fn main() {
     let durations_sec =
         (trace_duration.as_secs() as f32) + (trace_duration.subsec_millis() as f32) / 1000.0;
     let ray_total_count = ray_total_count.load(Ordering::SeqCst);
-    println!("{} rays in {} s", ray_total_count, durations_sec);
     println!(
-        "{} K rays per second",
+        "Rendered scene at {}x{},{}spp in {} s",
+        WIDTH, HEIGHT, SPP, durations_sec
+    );
+    println!(
+        "- {} Rays, {} K Rays/s",
+        ray_total_count,
         (ray_total_count as f32) / durations_sec / 1000.0
     );
 
